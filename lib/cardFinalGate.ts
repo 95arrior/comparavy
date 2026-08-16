@@ -223,6 +223,8 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
     if (isEntertainmentTopic(text)) {
       drops.push({ keyword: c.keyword, reason: "entertainment" }); continue;
     }
+    // ★과거 연도 폐기(2026-08-17 유저: 재작성 금지 — 올해 자료로 재구성 못 하면 버린다. 제목에 박힌 과거 연도는 글감째 폐기)
+    if (hasStaleYear(text)) { drops.push({ keyword: c.keyword, reason: "stale_year" }); continue; }
     // 1) 지역 협소 — 지역명이 박힌 글감은 전국 풀 신호(전국민 주제·인기지 청약 등)가 없으면 부적격.
     //    '서울시 출산가구 720만'(대집단+광역 4점)은 통과, '강서구 평생교육이용권'(0~1점)은 컷.
     // ★폐지·종료 제도 하드컷(2026-08-01 유저 지시 "빡세게") — 실측: '재형저축'(2015년 가입 종료)이
@@ -328,9 +330,6 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
   return { pass, drops };
 }
 
-/** ★낡은 연도 정정(2026-08-14 유저 실측: '비거주 1주택자 전세대출 제한 2025' — 뉴스는 올해 건인데 모델이 학습 시절 연도를 붙임).
- *  지금 뜨는 뉴스에서 나온 글감의 과거 연도는 오타다 — 올해로 고친다. 올해·미래 연도는 그대로(선행 발행 전략).
- *  예외: 1월엔 작년 표기가 정당할 수 있다(연말정산 귀속 등) — 그때만 작년을 살려둔다. */
 /** ★엔터 소재 판정 — 작품 자체면 true, 구독료·요금 같은 돈 각도는 false(2026-08-17 머니랭킹과 공유). */
 export function isEntertainmentTopic(text: string): boolean {
   const t = String(text ?? "");
@@ -338,12 +337,24 @@ export function isEntertainmentTopic(text: string): boolean {
     && !/(요금|구독료|가격|인상|할인|환불|투자|매출|주가)/.test(t);
 }
 
-export function normalizeStaleYear(text: string, now: Date = new Date(Date.now() + 9 * 3600_000)): string {
+/** ★낡은 연도 처리 v2(2026-08-17 유저 지적: "2025→2026 자동 재작성은 제도가 바뀌었으면 완전히 다른 정보가 된다 — 바로 없애라").
+ *  원칙: 재작성 금지. 과거 연도 토큰은 '제거'만 한다(연도 없는 중립 키워드로) — 사실의 현행화는
+ *  생성 단계의 팩트 크로스체크(최신 뉴스 대조)가 맡는다. 올해·미래 연도는 그대로(선행 발행).
+ *  예외: 1월엔 작년 표기가 정당할 수 있다(연말정산 귀속 등). */
+export function stripStaleYear(text: string, now: Date = new Date(Date.now() + 9 * 3600_000)): string {
   const y = now.getFullYear();
-  return String(text ?? "").replace(/(20\d{2})(년?)/g, (m, yr: string, suffix: string) => {
+  return String(text ?? "").replace(/\s*(20\d{2})(년?)\s*/g, (m, yr: string) => {
     const n = Number(yr);
     if (n >= y) return m;
     if (n === y - 1 && now.getMonth() === 0) return m;
-    return `${y}${suffix}`;
+    return " ";
+  }).replace(/\s{2,}/g, " ").trim();
+}
+export function hasStaleYear(text: string, now: Date = new Date(Date.now() + 9 * 3600_000)): boolean {
+  const y = now.getFullYear();
+  return [...String(text ?? "").matchAll(/(20\d{2})/g)].some((m) => {
+    const n = Number(m[1]);
+    return n < y && !(n === y - 1 && now.getMonth() === 0);
   });
 }
+

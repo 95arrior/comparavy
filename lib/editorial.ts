@@ -241,7 +241,7 @@ export const SENT_MAX_CHARS = 90; // 18자 기준 5줄
 //  상한(형광 2곳)만 있고 하한이 없어서 0개로 나가도 아무도 몰랐다 — 이모지와 같은 병이다.
 //  ★타겟이 40~70대라 '어디가 중요한지'가 눈에 안 들어오면 그냥 나간다.
 export const BOLD_MIN_PER_1000 = 2;  // 1,000자당 굵은 글씨 최소 2곳
-export const MARK_MIN = 3;           // ★2→3(2026-08-11 유저 2차: '아직 많이 부족, 핵심이 묻혀요') — 상한은 4곳
+export const MARK_MIN = 0;           // ★3→0(2026-08-17 유저: '필요할 때만 — 매 글 같은 개수는 템플릿 느낌·기계 대량생산 신호와 닮는다') — 하한 폐지, 상한 4만 유지
 export function emphasisShortfall(html: string): { chars: number; bold: number; mark: number; wantBold: number } | null {
   const h = String(html || "");
   const chars = h.replace(/<[^>]+>/g, "").replace(/\s/g, "").length;
@@ -250,7 +250,7 @@ export function emphasisShortfall(html: string): { chars: number; bold: number; 
   // 형광펜은 표기가 바뀐다(mark / b+background) — 결과(배경색)로 센다(게이트 중앙화 원칙)
   const mark = (h.match(/<mark\b/g) ?? []).length + (h.match(/background(?:-color)?\s*:\s*(?!transparent|none)/gi) ?? []).length;
   const wantBold = Math.max(2, Math.round((chars / 1000) * BOLD_MIN_PER_1000));
-  return bold < wantBold || mark < MARK_MIN ? { chars, bold, mark, wantBold } : null;
+  return bold < wantBold || (MARK_MIN > 0 && mark < MARK_MIN) ? { chars, bold, mark, wantBold } : null; // 형광 하한은 2026-08-17 폐지(MARK_MIN=0) — 볼드 최소만 남김
 }
 export function longSentences(html: string): { preview: string; chars: number }[] {
   const prose = String(html || "").replace(/<(table|ul|ol)[\s\S]*?<\/\1>/gi, "");
@@ -310,7 +310,7 @@ export function longParagraphs(html: string): { preview: string; lines: number }
 // ═══ 이모지 하한(2026-08-02 발행글 실측: 규격 3~6인데 실제 0개) ═══
 //  상한(6)만 코드에 있고 하한이 없어서 0개로 나가도 아무도 몰랐다. 형광펜과 같은 병이다.
 const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
-export const EMOJI_MIN = 5;          // ★4→5(2026-08-11 유저 2차: '이모지 수가 많이 부족') — 상한 8(publishHtml EMOJI_CAP과 짝)·리듬 게이트 유지
+export const EMOJI_MIN = 0;          // ★5→0(2026-08-17 유저: '이모지 0~4 가변 — 최솟값 강제는 반복 문법을 만든다') — 하한 폐지, 상한은 publishHtml EMOJI_CAP=4
 export function emojiCount(html: string): number {
   return (stripTags(html).match(EMOJI_RE) ?? []).length;
 }
@@ -495,7 +495,7 @@ export function ensureRelatedLinks(html: string, posts: { title: string; url: st
   const add = posts
     .filter((p) => /^https?:\/\//i.test(String(p.url || ""))) // 주소가 없는 후보는 링크가 될 수 없다
     .filter((p, i, arr) => arr.findIndex((x) => x.url.split("?")[0] === p.url.split("?")[0]) === i) // 같은 글 두 번 금지
-    .slice(0, 3);
+    .slice(0, 2); // ★3→2(2026-08-17 유저: '기계적 3개 고정 → 문맥상 맞는 1~2개' — 순서는 seriesFirst가 연관도로 이미 정렬)
   if (!add.length) return h;
   const markers = add.map((p) => `<p>[마무리관련글: ${p.url} | ${String(p.title).slice(0, 60)}]</p>`).join("");
   return `${h}\n${markers}`;

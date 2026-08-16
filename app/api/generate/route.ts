@@ -500,8 +500,8 @@ export async function POST(request: Request) {
           }
           // ★이모지 하한(실측: 규격 3~6인데 실제 0개) — 상한만 있고 하한이 없었다.
           const ec = emojiCount(a.body_html);
-          if (ec < EMOJI_MIN) {
-            w.push(`이모지가 ${ec}개뿐이다. 섹션 리드나 체크 목록에 ${EMOJI_MIN}~5개를 자연스럽게 넣어라(📌 ✅ 💡 ⏰ 👇 정도). 없으면 글이 딱딱하게 읽힌다.`);
+          if (EMOJI_MIN > 0 && ec < EMOJI_MIN) { // ★이모지 하한 폐지(2026-08-17) — 상한만 코드로(EMOJI_CAP=4)
+            w.push(`이모지가 ${ec}개뿐이다.`);
           }
           // ★표 하한(2026-08-11 유저: "표가 부족하네 빡세게") — 리스트는 마감에서 표로 변환되므로 같이 센다.
           const tableish = (a.body_html.match(/<table/gi) ?? []).length + (a.body_html.match(/<[uo]l\b/gi) ?? []).length;

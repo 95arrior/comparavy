@@ -483,15 +483,17 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(finalGate([{ keyword: "골프존홀딩스 공개매수 신청방법", title: "골프존홀딩스 공개매수, 일반 주주도 참여할 때", seedSource: "newspsych" }]).drops.length === 0, "다른 원천엔 이 검문을 안 건다");
 }
 
-// ★낡은 연도 정정(2026-08-14 유저 실측: "비거주 1주택자 전세대출 제한 2025" — 뉴스는 올해 건)
+// ★낡은 연도 v2(2026-08-17 유저: 자동 재작성 폐기 — 제거 또는 폐기만)
 {
-  const { normalizeStaleYear } = await import("../lib/cardFinalGate.ts");
-  const now = new Date("2026-08-14T09:00:00+09:00");
-  chk_(normalizeStaleYear("비거주 1주택자 전세대출 제한 2025", now) === "비거주 1주택자 전세대출 제한 2026", "★실측 실물: 2025 → 2026");
-  chk_(normalizeStaleYear("2024년 지원금 총정리", now) === "2026년 지원금 총정리", "2년 전 연도도 올해로");
-  chk_(normalizeStaleYear("2026 출산지원금 타임라인", now) === "2026 출산지원금 타임라인", "올해는 그대로");
-  chk_(normalizeStaleYear("2027년 최저임금 예고", now) === "2027년 최저임금 예고", "미래 연도는 그대로(선행 발행)");
-  chk_(normalizeStaleYear("2025년 귀속 연말정산", new Date("2026-01-15T09:00:00+09:00")) === "2025년 귀속 연말정산", "1월의 작년 표기는 정당(연말정산 귀속)");
+  const { stripStaleYear, hasStaleYear, finalGate } = await import("../lib/cardFinalGate.ts");
+  const now = new Date("2026-08-17T09:00:00+09:00");
+  chk_(stripStaleYear("비거주 1주택자 전세대출 제한 2025", now) === "비거주 1주택자 전세대출 제한", "★과거 연도는 재작성이 아니라 제거");
+  chk_(stripStaleYear("2026 출산지원금 타임라인", now) === "2026 출산지원금 타임라인", "올해는 그대로");
+  chk_(stripStaleYear("2027년 최저임금 예고", now) === "2027년 최저임금 예고", "미래는 그대로(선행 발행)");
+  chk_(hasStaleYear("2025년 청년지원금 총정리", now) === true, "제목의 과거 연도를 감지한다");
+  chk_(hasStaleYear("2025년 귀속 연말정산", new Date("2026-01-15T09:00:00+09:00")) === false, "1월의 작년 귀속은 예외");
+  const r = finalGate([{ title: "2025년 청년지원금 총정리", keyword: "청년지원금 2025" }]);
+  chk_(r.pass.length === 0 && r.drops[0].reason === "stale_year", "★과거 연도 글감은 폐기(재작성 금지)");
 }
 
 // ★엔터 소재 컷 + 혈통 범용어(2026-08-14 실측: 보도자료 '창업 프로젝트' → 영화 '프로젝트 헤일메리 ott 언제' 증식)

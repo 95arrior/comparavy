@@ -57,7 +57,7 @@ const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2
 // ★포맷 v3(네이버 공식 블로그팀 문법) — 포인트 이모지 화이트리스트만 통과(도배 방지), 그 외 전부 제거.
 // ★정책 전환(2026-07-13 유저 확정 — 금융보카 레퍼런스): 가벼운 이모지 간간히 허용. 도배 우려는 금지가 아니라 '총량 캡'으로 해소.
 const EMOJI_ALLOW = ["📌", "💡", "⚠️", "✔️", "👀", "😊", "😂", "🎯", "💰", "🙌"];
-const EMOJI_CAP = 8; // ★6→8(2026-08-11 유저 2차: 이모지 더) — 📌 제외 글당 상한, 초과분은 뒤에서부터 소거
+const EMOJI_CAP = 4; // ★8→4(2026-08-17 유저: '필요할 때 최대 4' — 최솟값 강제 폐지와 짝) — 📌 제외 글당 상한, 초과분은 뒤에서부터 소거
 export function stripEmoji(s: string): string {
   const MASK = "\u0000EM";
   let out = s;
@@ -446,7 +446,7 @@ function styleMarkers(html: string): string {
         const title = String(m[2]).trim().replace(/</g, "");
         if (!url || seen.has(url)) continue; // 같은 글 두 번 금지
         seen.add(url);
-        if (items.length >= 3) continue;     // 유저 확정: 2~3개
+        if (items.length >= 2) continue;     // ★2026-08-17 유저: 문맥상 1~2개
         items.push(`<p style="text-align:center;font-size:13.5px;color:#4e5968">${title}<br><span style="font-size:12.5px;color:#8b95a1">${url}</span></p>`);
       }
       const block = items.length
