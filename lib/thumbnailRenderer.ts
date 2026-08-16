@@ -241,7 +241,8 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const longest = Math.max(...lines.map((l) => [...l].length), 1);
     // ★크기 통일(2026-07-13 유저 확정: 텍스트 크기는 일정해야) — 네이버 120 고정 / WP 112 고정(pressFixedSize).
     //  문구 소스가 9자/줄을 보장(추천 게이트+폴백 fit9)하므로 사실상 전부 고정 크기 — 초과 엣지만 안전 축소.
-    const uniform = input.pressFixedSize ?? 120;
+    //  ★이미지 배경은 104로 한 단계 축소(2026-08-17 유저 "비율조정" — 인물 중심 썸네일에서 120은 인물과 경쟁). 모드 내 고정은 유지.
+    const uniform = input.pressFixedSize ?? (bgDataUrl ? 104 : 120);
     const pressSize = longest <= 9 ? uniform : Math.floor(Math.min(978, uniform * 8.7) / longest);
     const accent = "#FFD34D"; // 핵심(마지막) 줄 포인트 — 다크 위 최고 가독 옐로
     // ★최종(2026-07-10): 풀블리드 — 액자는 배경 퀄이 오른 지금 이미지를 잘라 손해(+흰 홈판에서 경계 소실). 칩 회피는 중앙 문구+세이프 존이 담당
@@ -255,7 +256,8 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
         el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } }),
         // ★전면 오버레이 폐지(2026-08-17 유저: "전체 블러 하지 말고 하단만") — 이미지 v2가 상반신 클로즈업+하단 여백을
         //  주므로 상단은 원본 그대로 두고, 문구가 앉는 하단만 그라데이션으로 어둡게. 가독은 텍스트 섀도(0.72)와 분담.
-        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(0deg, rgba(6,8,14,0.78), rgba(6,8,14,0.42) 26%, rgba(0,0,0,0) 48%)" } }),
+        // ★비율 조정(2026-08-17 유저 실물: 문구가 중간까지 올라오고 아래 빈 어둠이 큼) — 그라데이션을 38%로 압축해 일러스트를 더 살린다
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(0deg, rgba(6,8,14,0.82), rgba(6,8,14,0.46) 22%, rgba(0,0,0,0) 38%)" } }),
       ] : [
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 28% 18%, ${shade(flatBase, isDark(p.bg) ? 38 : 26)}, ${shade(flatBase, isDark(p.bg) ? -8 : -16)})` } }),
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 76% 82%, ${rgba(shade(p.point, isDark(p.bg) ? 16 : 24), isDark(p.bg) ? 0.55 : 0.42)} 0%, rgba(0,0,0,0) 55%)` } }),
@@ -266,7 +268,7 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
       // 문구 — ★하단 배치(2026-08-17 유저: 이미지 v2가 하단 여백을 남기므로 문구는 아래로, 정중앙 폐기).
       //  이미지 배경일 때만 — 색면은 하단 스크림이 없어 중앙 유지. bottom 175 = 채널 칩 세이프 존(하단 15%) 위.
       el("div", { style: bgDataUrl
-        ? { position: "absolute", left: 48, right: 48, bottom: 175, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: 10 }
+        ? { position: "absolute", left: 48, right: 48, bottom: 96, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: 10 } // ★175→96(2026-08-17 유저: "텍스트를 좀 내려야") — 칩과는 문구가 중앙 정렬이라 좌하단 칩과 안 겹침
         : { position: "absolute", left: 48, right: 48, top: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 } },
         [
           // 이미지 배경이면 subCopy는 문구 기둥 위 작은 줄로 합류(별도 절대 배치는 하단 문구와 겹친다)
