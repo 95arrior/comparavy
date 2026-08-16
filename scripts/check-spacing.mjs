@@ -18,8 +18,8 @@ ok(!new RegExp(`(?:${esc}){5,}`).test(rich),"연속 스페이서 상한 4");
 // plain 동일 여백
 const plain=buildPlainText({title:"t",bodyHtml:body,hashtags:["하나","둘"]});
 ok(!/#하나/.test(plain),"plain에도 해시태그 없음");
-// ★소제목은 세로 바(▍)로 구분한다(2026-07-17 확정 — 색상 아님). 옛 테스트는 바 없이 매칭해 FAIL이었다.
-ok(/문단 둘\.\n\n\n\n▍ 소제목/.test(plain),"plain 소제목 앞 3(빈줄) + 세로 바");
+// ★소제목 무도형(2026-08-17 유저 반전 — 세로 바(▍) 제거, 굵은 왼쪽 정렬이 기본)
+ok(/문단 둘\.\n\n\n\n소제목/.test(plain) && !plain.includes("▍"), "plain 소제목 앞 3(빈줄) + 도형 없음");
 // ★숫자 쉼표 회귀 — 4,500만 원 등이 쉼표에서 쪼개지지 않아야
 const numBody="<p>지원 한도는 4,500만 원이고 수수료는 3,900원이며 자산 1,000만 원 이상이면 대상에서 제외되는데 이 조건은 소득 3.5% 기준과 2026. 7. 4. 공고 기준으로 정해졌다는 점을 꼭 확인하세요 반드시요.</p>";
 const numRich=formatBody({title:"t",bodyHtml:numBody});

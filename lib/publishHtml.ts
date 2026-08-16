@@ -149,6 +149,19 @@ export function normalizeTableColumns(html: string): string {
 }
 
 /** ★소수점 재접합(2026-08-14 실측: 'PF 금리 0.5%p'가 '0.' / '5%p' 줄로 쪼개져 발행) — 숫자.줄바꿈.숫자는 소수점이다. */
+/** ★문자 구분선 제거(2026-08-17 유저: ━━·──는 모바일에서 인위적 — 구분은 이미지·소제목이 한다) */
+export function stripFakeDividers(html: string): string {
+  return String(html ?? "").replace(/<p[^>]*>\s*(?:[─━═—\-_=·•]\s*){4,}<\/p>/g, "").replace(/(?:[─━═]{4,})/g, "");
+}
+/** ★인용구 상한(2026-08-17 유저: 홈판 0~1·검색 0~2 — 정말 결론에만. 초과분은 일반 문단으로 강등) */
+export function capQuotes(html: string, max: number = 1): string {
+  let n = 0;
+  return String(html ?? "").replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (m, inner) => {
+    n += 1;
+    return n <= max ? m : `<p style="text-align:left">${inner.replace(/<\/?p[^>]*>/gi, " ").trim()}</p>`;
+  });
+}
+
 export function fixSplitDecimals(html: string): string {
   return String(html ?? "").replace(/(\d)\.\s*(?:<\/p>\s*<p[^>]*>|<br\s*\/?>|\n)+\s*(\d)/gi, "$1.$2");
 }
@@ -272,7 +285,7 @@ function splitInner(inner: string): string[] {
 }
 export function splitLongParagraphs(html: string): string {
   return html.replace(/<(p|blockquote|li)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (_m, tag, attr, inner) => {
-    const chunks = splitInner(inner);
+    const chunks = BODY_ALIGN === "center" ? splitInner(inner) : [fixBrokenUrls(inner)]; // ★개행 v6은 중앙 전용 — 왼쪽(2026-08-17)은 자연 문단
     if (chunks.length <= 1) return `<${tag}${attr ?? ""}>${chunks[0] ?? inner}</${tag}>`; // ★가공본(절 개행 <br>) 보존 — 원문 반환이 개행을 버리고 있었음
     return chunks.map((c) => `<${tag}${attr ?? ""}>${c}</${tag}>`).join("");
   });
@@ -398,7 +411,7 @@ function styleMarkers(html: string): string {
     const clean = String(inner).replace(/<[^>]+>/g, "").trim();
     // ★소제목 v2.1(2026-07-17 유저: 버티컬 라인 필수 + 실측: border-left는 네이버 붙여넣기에서 소실) —
     //  세로 바를 스타일이 아니라 '글자(▍ U+258D)'로 그린다(파란 글자 = 복붙 생존 검증됨). 텍스트는 진한 검정.
-    return `<h2 style="text-align:center;word-break:keep-all;font-size:19px;font-weight:800;color:#191919"><span style="color:#0073e9">▍</span> ${clean}</h2>`;
+    return `<h2 style="text-align:left;word-break:keep-all;font-size:19px;font-weight:800;color:#191919">${clean}</h2>`; // ★도형(▍) 제거(2026-08-17 유저: 소제목 70~80%는 아무 도형 없이 — 굵은 왼쪽 정렬이 기본)
   });
   // ★※ 각주 — 작은 회색 보조문(레퍼런스 문법: 참고·단서는 본문보다 한 단계 작고 옅게)
   html = html.replace(/<p(\s[^>]*)?>\s*(※[\s\S]*?)<\/p>/gi, (_m, _attr, inner) => {
@@ -780,7 +793,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(input.bodyHtml))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(capQuotes(stripFakeDividers(input.bodyHtml), 2)))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).

@@ -206,7 +206,7 @@ export default function NaverPublishSheet({
           <div className="mt-5">
             <p className="text-[17px] font-bold text-neutral-900">발행 버튼까지 눌렀나요?</p>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버에서 발행을 마쳤다면 아래를 눌러 오늘 미션을 끝내세요.</p>
-            <p className="mt-2 rounded-xl bg-[#F7F8FA] px-3.5 py-2.5 text-[12px] leading-relaxed text-neutral-500">💡 발행 전 마지막 손맛 2가지 — ①맨 위 인용구를 클릭해 <b className="text-neutral-700">인용구 스타일</b>(말풍선·포스트잇 등)을 글마다 다르게 골라보세요 ②섹션 사이 <b className="text-neutral-700">네이버 스티커 1~2개</b>. 둘 다 사람이 쓴 글이라는 신호예요.</p>
+            <p className="mt-2 rounded-xl bg-[#F7F8FA] px-3.5 py-2.5 text-[12px] leading-relaxed text-neutral-500">📱 발행 전 <b className="text-neutral-700">모바일 미리보기 10초</b> — 딱 4개만 보세요: ①첫 화면이 답답한가 ②7줄 넘는 글벽이 있는가 ③한 화면에 강조·도형이 3개 이상 겹치는가 ④첫 이미지까지 너무 먼가. 하나라도 YES면 그 부분만 손보고 발행하세요. (+인용구 스타일 한 번 바꿔주면 사람 손맛)</p>
             {articleId && (
               <div className="mt-3 rounded-xl bg-neutral-50 px-4 py-3">
                 <p className="text-[12.5px] font-bold text-neutral-700">발행한 글 주소를 붙여넣어 주세요</p>
