@@ -36,11 +36,12 @@ export function buildThumbImagePrompt(keyword: string, scene?: string | null): s
   const style = hashPick(THUMB_STYLES, keyword);
   const palette = paletteFor(keyword);
   return [
-    `Flat vector illustration for a Korean finance blog thumbnail about "${keyword}".`,
+    `Flat vector illustration for a Korean personal-finance blog thumbnail about "${keyword}".`,
+    "Audience: Korean office workers and households in their 30s-50s scrolling a mobile feed — the image must make THEM feel 'this is about my money' within 1 second.",
     `Scene: ${scene?.trim() || style}.`,
     "Show the scene caused by the money event — a person or object experiencing it — never charts, graphs, office buildings or cash piles.",
     "Composition: 1200x1200 square, the main subject centered within the middle 70% (edges may be cropped by feeds), one strong foreground subject, very simple background, at most 2 supporting props.",
-    "Emotion must read instantly even at small mobile size.",
+    "Emotion must read instantly even at small mobile size — pick ONE clear feeling (loss, relief, surprise or urgency) and let the face or object language carry it.",
     `Color: ${palette}, clean Toss-style flat illustration, soft shapes, generous negative space in the lower third for a short Korean caption to be overlaid later.`,
     "Absolutely no text, no letters, no numbers, no logos anywhere in the image.",
   ].join(" ");
@@ -50,7 +51,8 @@ export function buildThumbImagePrompt(keyword: string, scene?: string | null): s
 export function buildBodyImagePrompt(sceneDesc: string, keyword: string): string {
   const palette = paletteFor(`${keyword} ${sceneDesc}`);
   return [
-    `Flat vector illustration for the body of a Korean finance blog post.`,
+    `Flat vector illustration for the body of a Korean personal-finance blog post.`,
+    "Audience: Korean readers in their 30s-50s reading about everyday money — relatable daily-life details (kitchen table, pay slip, phone banking) over abstract finance symbols.",
     `Scene: ${sceneDesc.trim()}.`,
     "Natural, calm everyday scene that helps the reader picture the situation — no exaggerated shock faces, no clickbait energy, no charts or graphs.",
     "Composition: wide 4:3, subject slightly off-center, plenty of breathing room, simple background.",

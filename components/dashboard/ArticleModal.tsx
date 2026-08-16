@@ -566,9 +566,9 @@ export default function ArticleModal({ pubStampKey, blogName,
                       {true && <button onClick={async () => {
                         const desc = slot.desc.replace(/^AI\s*컨셉\s*[—-]\s*/, "").trim();
                         const prompt = buildBodyImagePrompt(desc, article.keyword ?? "");
-                        try { await navigator.clipboard.writeText(prompt); setToast("이미지 주문서를 복사했어요 — 만드는 곳에 붙여넣으세요"); } catch { setToast("복사하지 못했어요"); }
+                        try { await navigator.clipboard.writeText(prompt); setToast("이미지 프롬프트를 복사했어요 — 외부 도구에 붙여넣고, 나온 이미지를 [사진 올리기]로"); } catch { setToast("복사하지 못했어요"); }
                       }} className="at-press shrink-0 rounded-lg bg-neutral-100 px-3 py-1.5 text-[12px] font-bold text-neutral-600 transition hover:bg-neutral-200">
-                        주문서 복사
+                        🎨 프롬프트 복사
                       </button>}
                       <label className="at-press shrink-0 cursor-pointer rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">
                         {st.busy ? "올리는 중" : st.url ? "불러오기" : "사진 올리기"}
