@@ -168,8 +168,6 @@ ok(!titleShapeClashes("조선관련주, 지금 사도 되는 걸까요?", 수렴
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 제목 뼈대");
-process.exit(fail ? 1 : 0);
-
 // ★제목 대시 금지(2026-08-17 유저: "쓰지 않기로 했는데 계속 나온다") — 코드 치환 검증
 {
   const { stripTitleDash } = await import("../lib/editorial.ts");
@@ -179,3 +177,5 @@ process.exit(fail ? 1 : 0);
   ok2(stripTitleDash("e-커머스 정산 지연") === "e-커머스 정산 지연", "붙은 하이픈은 보존");
   ok2(stripTitleDash("8·15 특판 적금") === "8·15 특판 적금", "가운뎃점 보존");
 }
+
+process.exit(fail ? 1 : 0);
