@@ -326,7 +326,7 @@ export default function Home({
   //  빈 칸은 눌리지 않지만 그대로 남긴다: '없다'가 보여야 이슈가 없는 건지 우리가 못 잡은 건지 갈린다.
   const [slotTab, setSlotTab] = useState<string>("전체");
   const todayDate = localDayStr();
-  const topicsCacheKey = () => `ateflo_topics_v30_${todayDate}_${profileKey ?? ""}_normal`;
+  const topicsCacheKey = () => `ateflo_topics_v31_${todayDate}_${profileKey ?? ""}_normal`;
 
   const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
   const swapCountKey = `ateflo_swaps_${localDayStr()}_${profileKey ?? ""}`;
@@ -374,7 +374,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v30_${localDayStr()}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v31_${localDayStr()}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
