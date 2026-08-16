@@ -277,7 +277,7 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 export async function englishBrief(topic: string, secondary?: string): Promise<{ topicEn: string; secondaryEn?: string } | null> {
   try {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 1, timeout: 30_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5", max_tokens: 200,
       messages: [{ role: "user", content: `Translate for an illustration brief (no explanations, JSON only): {"topicEn":"<the topic as a short concrete English noun phrase>","secondaryEn":"<the secondary text in short English — if it is a hook copy give its emotional point in one sentence, if it is prop nouns list the nouns>"}\nTopic: ${topic}\nSecondary: ${secondary ?? "(none)"}` }],
@@ -296,14 +296,20 @@ export function stripHangul(t: string, fallback: string): string {
   return t.replace(/[가-힣]+/g, " ").replace(/\s+/g, " ").trim() || fallback;
 }
 
-export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number; textSafe?: boolean }): Promise<{ base64: string; mime: string; provider?: string }> {
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number; textSafe?: boolean; lane?: "home" | "search" }): Promise<{ base64: string; mime: string; provider?: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg" + String(opts?.variant ?? 0)) + Math.floor(Math.random() * 1e9)) >>> 0;
   // ★카피 은유 극화(2026-07-13 유저 베스트 실측 — 추상 무대는 주제 무관 판정): 훅 문구의 감정 포인트를 장면으로.
   //  중앙 비움(조판 자리)·팔레트 회전·디자인 캐릭터 유지. 텍스트는 전면 금지(그림으로만) + 프롬프트 자체를 전량 영어로.
   const rawTopic = (topic ?? bgStyleHint ?? "").trim() || "재테크";
   const brief = await englishBrief(rawTopic, opts?.copyText);
   const safeTopic = brief?.topicEn ?? stripHangul(rawTopic, "personal finance in Korea");
-  // ★썸네일은 항상 진한 배경(deepBg) — 대형 카피가 중앙에 얹히는 용도라 대비가 전부다.
+  // ★v3 생활 장면 공식(2026-08-17 유저: 은유·다크 에디토리얼이 "홈판과 안 맞고 대부분 비슷") —
+  //  photo 경로는 파스텔 생활 장면(imagePrompts 영어 미러, 장면 변주 엔진+하단 35% 여백 하드 규칙)으로.
+  //  toss(색면) 경로만 종전 은유 프롬프트 유지. 가독은 합성 단계의 하단 그라데이션+텍스트 섀도가 담당.
+  if ((opts?.forceStyle ?? "photo") === "photo") {
+    const { buildThumbScenePromptEn } = await import("./imagePrompts");
+    return callImage(buildThumbScenePromptEn(safeTopic, rawTopic, opts?.lane ?? "home", seed), "1:1");
+  }
   const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed, { textSafe: opts?.textSafe, deepBg: true });
   return callImage(prompt, "1:1");
 }

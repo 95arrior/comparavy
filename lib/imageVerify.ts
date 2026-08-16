@@ -22,6 +22,8 @@ export interface VerifyOpts {
   strict?: boolean;
   /** 느슨한 소속감 검사용 주제(있을 때만 검사) */
   topic?: string;
+  /** ★v3 생활 장면(2026-08-17) — 하단 1/3 단색 띠는 의도된 문구 자리(액자 오탐 방지) */
+  allowBottomBand?: boolean;
 }
 
 /** 판정 불가 상태의 결과 — strict면 불합격으로 떨어뜨린다. */
@@ -85,7 +87,7 @@ export async function verifyThumbLegible(base64: string, mime: string, opts?: { 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { single: true, identifiable: true, adLike: false, nameable: true, ok: true };
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 30_000 }); // ★300초 타임아웃 조사(2026-08-17) — 검증 호출도 상한
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 160,
@@ -108,14 +110,15 @@ export async function verifyImage(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return unknownVerdict(opts?.strict); // 키가 없으면 '검사 안 함'이지 '글자 없음'이 아니다
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 30_000 }); // ★300초 타임아웃 조사(2026-08-17) — 검증 호출도 상한
     // ★잘린 글자·사물 표면 글자를 명시한다 — 실측 사고가 '카드 위에 부분적으로 잘린 한글 두 글자'였다.
     //  where를 함께 요구하는 이유는 값 자체가 필요해서가 아니라, 근거를 대게 하면 실제로 들여다보기 때문이다.
     const topicQ = opts?.topic
       ? ` (3)이 그림이 "${opts.topic}" 주제 블로그 글의 썸네일이라 할 때 '전혀 무관'해 보이는가 — 은유·상징·간접 연출은 전부 정상이다. 주제와 어떤 연상도 이어지지 않는 완전 딴판일 때만 true.`
       : "";
+    const bandNote = opts?.allowBottomBand ? " 단, 화면 아래쪽 1/3 정도가 단순한 단색 배경 띠로 비어 있는 것은 의도된 디자인(문구가 올라갈 자리)이므로 액자·여백 띠로 판정하지 않는다 — 네 변을 둘러싼 프레임만 '있음'." : "";
     const q = opts?.bgOnly
-      ? `이 이미지를 점검한다. (1)글자·문자·숫자·로고·워터마크가 조금이라도 보이는가? 간판·카드·표지판·버튼·책·서류 같은 사물 표면에 적힌 글자, 화면 밖으로 잘려 일부만 보이는 글자, 흐릿하거나 작은 글자도 전부 '있음'으로 본다. (2)그림이 가장자리까지 꽉 차지 않고 액자·프레임·베젤·기기 목업·단색 여백 띠 안에 들어가 있는가(그림이 안쪽 사각형에만 있고 바깥이 다른 색 띠면 '있음').${topicQ} JSON만: {"hasText":bool,"hasFrame":bool${opts?.topic ? ',"offTopic":bool' : ""},"where":"짧게"}`
+      ? `이 이미지를 점검한다. (1)글자·문자·숫자·로고·워터마크가 조금이라도 보이는가? 간판·카드·표지판·버튼·책·서류 같은 사물 표면에 적힌 글자, 화면 밖으로 잘려 일부만 보이는 글자, 흐릿하거나 작은 글자도 전부 '있음'으로 본다. (2)그림이 가장자리까지 꽉 차지 않고 액자·프레임·베젤·기기 목업·단색 여백 띠 안에 들어가 있는가(그림이 안쪽 사각형에만 있고 바깥이 다른 색 띠면 '있음').${bandNote}${topicQ} JSON만: {"hasText":bool,"hasFrame":bool${opts?.topic ? ',"offTopic":bool' : ""},"where":"짧게"}`
       : `이 이미지를 점검한다. (1)글자·문자·숫자·로고·워터마크가 보이는가 — 사물 표면에 적힌 글자와 잘려서 일부만 보이는 글자도 포함한다 (2)사람 얼굴(이목구비)이 보이는가 (3)"${sceneDesc}" 장면과 대체로 맞는가. JSON만: {"hasText":bool,"hasFace":bool,"matchesScene":bool,"where":"짧게"}`;
     const res = await client.messages.create({
       model: "claude-haiku-4-5",

@@ -37,6 +37,8 @@ export async function composeThumbnail(opts: {
   topicHint?: string;
   /** ★무문구 모드(2026-08-02 유저 확정) — 조판 없이 이미지 한 장이 곧 썸네일. 홈판 유형 키를 함께 준다. */
   textless?: { betType: string };
+  /** ★프롬프트 강도(2026-08-17 v3) — 홈판=강한 감정 장면, 검색=명확 전달 */
+  lane?: "home" | "search";
 }): Promise<{ png: Buffer; usedAiBackground: boolean; aiFailReason?: string; textlessImage?: { base64: string; mime: string }; manualBrief?: string }> {
   const base = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
   const pal = opts.paletteName ? PALETTES.find((x) => x.name === opts.paletteName) : null;
@@ -75,19 +77,19 @@ export async function composeThumbnail(opts: {
     //  (press는 하단 다크 그라데이션+대형 카피가 배경을 덮어 배경 소글자 리스크가 낮다. Gemini는 텍스트 금지 준수율도 높음)
     try {
       const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
-      const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy, variant: opts.variant });
+      const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy, variant: opts.variant, lane: opts.lane });
       // ★press 예외 삭제(2026-07-31 4회차 사고) — "하단 그라데이션이 덮으니 리스크가 낮다"는 이유로
       //  보도형만 검증을 건너뛰고 있었다. 글자 금지에는 예외 조항을 두지 않는다(유저 확정 규칙).
       //  strict — 판정 불가(오류·파싱 실패·키 없음)면 떨어뜨린다. 배경은 코드 폴백이 있어 잃는 게 없다.
-      const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true, topic: opts.topicHint });
+      const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true, topic: opts.topicHint, allowBottomBand: opts.bgStyle !== "toss" });
       if (!v.hasText && !v.hasFrame && !v.offTopic) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
       else {
         // ★1회 재시도(2026-08-01 유저 실측: "썸네일 제작이 잘 안 되네요" — 1회 생성 후 바로 폴백이었다).
         //  같은 프롬프트로 또 부르면 같은 이유로 또 실패한다. 글자가 존재할 수 없는 소재로만 다시 그린다
         //  (증서·장부·청구서처럼 글자가 본질인 물건을 범주째 빼는 모드). WP 경로엔 이미 재시도가 있었다.
         //  총 왕복 2회 — 종전 4회 루프를 되살리지 않으면서 성공률만 올린다.
-        const bg2 = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy, variant: (opts.variant ?? 0) + 13, textSafe: true });
-        const v2 = await verifyImage(bg2.base64, bg2.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true, topic: opts.topicHint });
+        const bg2 = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy, variant: (opts.variant ?? 0) + 13, textSafe: true, lane: opts.lane });
+        const v2 = await verifyImage(bg2.base64, bg2.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true, topic: opts.topicHint, allowBottomBand: opts.bgStyle !== "toss" });
         if (!v2.hasText && !v2.hasFrame && !v2.offTopic) { bgDataUrl = `data:${bg2.mime};base64,${bg2.base64}`; usedAiBackground = true; }
         else aiFailReason = v2.offTopic ? "그림이 주제와 동떨어졌어요(2회 시도)" : v2.hasFrame ? "그림이 액자 안에 갇혔어요(2회 시도)" : "배경에 글자가 섞였어요(2회 시도)";
       }

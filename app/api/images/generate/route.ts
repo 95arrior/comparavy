@@ -123,6 +123,7 @@ export async function POST(request: Request) {
         fontTitle,
         topicHint: title || mainRaw, // 글 제목 우선 — 배경이 주제를 그린다
         bgStyle: body.bgStyle === "toss" ? "toss" : "photo", // ★메이커 기본=실사(유저 확정)
+        lane: body.lane === "search" ? "search" : "home", // ★v3(2026-08-17) — 홈판/검색 프롬프트 강도
         centerCopy: false,
         press: { brandName: brandName || String(body.brandName ?? "").trim() || "MY BLOG" }, // ★전 배경 공통 보도형(유저 확정: 3D도 좌하단 — 앨범 레이아웃 통일)
       });
