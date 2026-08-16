@@ -4,6 +4,7 @@
 //  이 파일은 '부류'를 지킨다: 각 원천의 대표 글감이 관문·수요 게이트를 통과하는가,
 //  원천이 죽었을 때 조용히 0이 되지 않는가, 표시값과 측정 대상이 같은가.
 import fs from "node:fs";
+const D = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10); // ★박제 날짜 금지(2026-08-17 실측: 8/10 픽스처가 시간이 지나며 썩어 위양성)
 import { finalGate } from "../lib/cardFinalGate.ts";
 import { preemptVerdict } from "../lib/preemptGate.ts";
 
@@ -17,10 +18,10 @@ console.log("① 관문이 자기 원천의 목적을 막지 않는가:");
   const cases = [
     ["캘린더", { keyword: "주민세", title: "주민세 납부 대상자, 8월에 확인할 것", seedSource: "calendar" }],
     ["캘린더+마감", { keyword: "근로장려금", title: "근로장려금 지급일, 8월 25일 입금되는 사람", seedSource: "calendar", actionEnd: "2026-08-25" }],
-    ["정부발표", { keyword: "법인세 중간예납", title: "법인세 중간예납, 8월 31일까지 해야 하는 것", seedSource: "gov", actionEnd: "2026-08-31" }],
+    ["정부발표", { keyword: "법인세 중간예납", title: "법인세 중간예납, 마감 전에 해야 하는 것", seedSource: "gov", actionEnd: D(14) }],
     ["공시", { keyword: "알테오젠 무상증자", title: "알테오젠 무상증자, 내 주식에 생기는 일", seedSource: "dart" }],
     ["커뮤니티", { keyword: "케이뱅크 황금캡슐", title: "케이뱅크 황금캡슐, 지금 확인하면 되는 것", seedSource: "community" }],
-    ["청약홈", { keyword: "양평역 한라비발디 무순위", title: "양평역 한라비발디 1세대 무순위, 8월 10일 접수", seedSource: "applyhome", actionEnd: "2026-08-10" }],
+    ["청약홈", { keyword: "양평역 한라비발디 무순위", title: "양평역 한라비발디 1세대 무순위, 접수 시작", seedSource: "applyhome", actionEnd: D(3) }],
     ["아침뉴스", { keyword: "전기차 보조금 신청", title: "전기차 보조금 신청, 승인 후 출고 전 확인할 것", seedSource: "newspsych" }],
     ["실시간", { keyword: "페이코 포인트 출금", title: "페이코 포인트 출금, 계좌마다 다른 이유", seedSource: "rising" }],
     ["보조금24", { keyword: "청년월세 특별지원", title: "청년월세 특별지원, 신청 조건과 기간", seedSource: "gov24" }],

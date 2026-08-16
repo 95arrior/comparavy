@@ -43,7 +43,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   // 표·리스트는 산문이 아니라 대상이 아니다(길어도 정상)
   ok(longParagraphs("<table><tr><td>" + "가".repeat(200) + "</td></tr></table>").length === 0, "표는 문단 판정 제외");
   ok(longParagraphs("<ul><li>" + "가".repeat(200) + "</li></ul>").length === 0, "리스트도 제외");
-  ok(PARA_MAX_LINES === 4, "상한 4줄(check-article과 같은 기준)");
+  ok(PARA_MAX_LINES === 3, "상한 3줄(2026-08-11 유저 확정 — 모바일 3줄 넘으면 쪼갠다)");
 }
 
 // ── ③ 이모지 하한 ──────────────────────────────────────────────────────
@@ -184,7 +184,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
     ok(new RegExp(fn).test(gr), `★${label} 게이트가 생성 경로에 배선됨`);
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/띄어쓰기\(2026-08-02 실측 결함\)/.test(ap), "프롬프트에도 띄어쓰기 규격 명시");
-  ok(/하한 2 — 실측으로 0개가 나갔다/.test(ap), "프롬프트에도 이모지 하한 명시");
+  ok(/이모지 하한 5~8/.test(ap), "프롬프트에도 이모지 하한 명시(2026-08-17 복원 — 5~8, EMOJI_MIN과 짝)");
 }
 
 
@@ -547,8 +547,8 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
   const em = emphasisShortfall(plain);
   ok(em !== null && em.bold === 0 && em.mark === 0, "★강조가 0인 글을 잡는다");
   ok(emphasisShortfall("<p>짧은 글</p>") === null, "짧은 글은 강조가 없어도 통과");
-  const rich = "<p>" + "가".repeat(600) + "<b>핵심</b></p><p><b>결론</b> <mark>중요</mark></p>";
-  ok(emphasisShortfall(rich) === null, "굵은 글씨 2곳 + 형광 1곳이면 통과");
+  const rich = "<p>" + "가".repeat(600) + "<b>핵심</b></p><p><b>결론</b> <mark>하나</mark> <mark>둘</mark> <mark>셋</mark></p>";
+  ok(emphasisShortfall(rich) === null, "굵은 글씨 2곳 + 형광 3곳이면 통과(MARK_MIN=3, 2026-08-11 상향)");
   // 형광펜은 표기가 바뀐다 — 결과(배경색)로 센다(게이트 중앙화 원칙)
   const styled = "<p>" + "가".repeat(600) + "<b>가</b></p><p><b>나</b> <b style=\"background:#ff0\">다</b></p>";
   ok(emphasisShortfall(styled) === null, "★<mark> 대신 배경색을 써도 형광으로 센다");
