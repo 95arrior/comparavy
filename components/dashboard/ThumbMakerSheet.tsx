@@ -20,9 +20,10 @@ const TONES = [
   { key: "vivid", label: "살리기", wash: 0.12 },
 ];
 
-export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated, brandKey, brandName, betType }: {
+export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated, brandKey, brandName, betType, promptLane }: {
   articleId: string;
   articleTitle?: string; // 배경 오브젝트 주제 힌트
+  promptLane?: "home" | "search"; // ★프롬프트 강도(2026-08-17: 검색형=약한 후킹, 홈판=강한 감정)
   /** ★무문구 모드용 홈판 유형 키 — 소재 문법이 여기서 갈린다(lib/thumbSubject) */
   betType?: string;
   copies: string[] | null; // 썸네일 문구 추천(상위 공유)
@@ -151,7 +152,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
 
         {/* ★썸네일 이미지 프롬프트(2026-08-17 유저: 외부 도구로 생성→'내 사진'으로 넣는 흐름) —
             돼지통 규격(1200² 중앙 70%·스타일 5종 로테이션·주제별 색·소품≤2·무텍스트)을 담아 복사 */}
-        <button onClick={() => { void navigator.clipboard.writeText(buildThumbImagePrompt(articleTitle ?? "", null)); setPromptCopied(true); setTimeout(() => setPromptCopied(false), 1200); }}
+        <button onClick={() => { void navigator.clipboard.writeText(buildThumbImagePrompt(articleTitle ?? "", null, promptLane ?? "home")); setPromptCopied(true); setTimeout(() => setPromptCopied(false), 1200); }}
           className="at-press mt-3 w-full rounded-xl bg-[#8134AF]/10 py-2.5 text-[12.5px] font-bold text-[#8134AF] transition hover:bg-[#8134AF]/15">
           {promptCopied ? "복사됨 ✓ — 외부 도구에 붙여넣고, 나온 이미지를 [내 사진]으로" : "🎨 썸네일 이미지 프롬프트 복사 (외부 생성용)"}
         </button>

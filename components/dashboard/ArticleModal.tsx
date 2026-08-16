@@ -718,7 +718,7 @@ export default function ArticleModal({ pubStampKey, blogName,
         )}
 
         {thumbMakerOpen && (
-          <ThumbMakerSheet
+          <ThumbMakerSheet promptLane={(() => { const sm = (article as { selection_meta?: { mrAngle?: string; species?: string } | null }).selection_meta; return sm?.mrAngle === "homefeed" || sm?.species === "homefeed" ? "home" : "search"; })()}
             brandKey={pubStampKey}
             brandName={blogName}
             articleId={article.id}
