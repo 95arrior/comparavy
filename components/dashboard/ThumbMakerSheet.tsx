@@ -44,6 +44,8 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   const [bgKind, setBgKind] = useState<"photo" | "plain" | "upload" | "textless">("photo"); // photo=일러스트(2026-07-09 실사 폐기 — 프롬프트가 일러스트), 기본=일러스트. upload=내 사진(무료)
   const [promptCopied, setPromptCopied] = useState(false);
   const promptRollRef = useRef(0); // ★리롤(2026-08-17 v3) — 누를 때마다 다른 장면 조합 // 썸네일 프롬프트 복사 표시
+  const [promptBusy, setPromptBusy] = useState(false);
+  const [promptText, setPromptText] = useState<string | null>(null); // 클립보드 차단 시 수동 복사
   const [customBg, setCustomBg] = useState<string | null>(null); // 유저 업로드 배경(1080 정방 크롭 dataURL)
   const fileRef = useRef<HTMLInputElement>(null);
   const fontKey = `ateflo_tfont_${brandKey ?? ""}`;
@@ -153,10 +155,31 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
 
         {/* ★썸네일 이미지 프롬프트(2026-08-17 유저: 외부 도구로 생성→'내 사진'으로 넣는 흐름) —
             돼지통 규격(1200² 중앙 70%·스타일 5종 로테이션·주제별 색·소품≤2·무텍스트)을 담아 복사 */}
-        <button onClick={() => { void navigator.clipboard.writeText(buildThumbImagePrompt(articleTitle ?? "", null, promptLane ?? "home", `${articleId}:${promptRollRef.current++}`)); setPromptCopied(true); setTimeout(() => setPromptCopied(false), 1200); }}
+        <button onClick={async () => {
+          // ★v4(2026-08-17): 서버 장면 설계(제목·키워드 → 주제 앵커 장면) 우선 — 실패·지연 시 로컬 v3 폴백.
+          //  클립보드 쓰기는 유저 제스처 직후가 아니면 막힐 수 있어, 실패하면 텍스트를 펼쳐 수동 복사로.
+          const roll = promptRollRef.current++;
+          const local = buildThumbImagePrompt(articleTitle ?? "", null, promptLane ?? "home", `${articleId}:${roll}`);
+          setPromptBusy(true);
+          let text = local;
+          try {
+            const r = await fetch("/api/thumb-prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId, roll }) });
+            const j = await r.json().catch(() => null);
+            if (j?.prompt) text = String(j.prompt);
+          } catch { /* 로컬 폴백 */ }
+          setPromptBusy(false);
+          try { await navigator.clipboard.writeText(text); setPromptCopied(true); setPromptText(null); setTimeout(() => setPromptCopied(false), 1500); }
+          catch { setPromptText(text); } // 클립보드 차단 — 수동 복사 UI
+        }}
           className="at-press mt-3 w-full rounded-xl bg-[#8134AF]/10 py-2.5 text-[12.5px] font-bold text-[#8134AF] transition hover:bg-[#8134AF]/15">
-          {promptCopied ? "복사됨 ✓ — 다시 누르면 다른 장면이 나와요" : "🎨 썸네일 이미지 프롬프트 복사 (외부 생성용)"}
+          {promptBusy ? "이 글에 맞는 장면을 설계하는 중…" : promptCopied ? "복사됨 ✓ — 다시 누르면 다른 장면이 나와요" : "🎨 썸네일 이미지 프롬프트 복사 (외부 생성용)"}
         </button>
+        {promptText && (
+          <div className="mt-2 rounded-xl bg-neutral-50 p-3">
+            <p className="text-[11.5px] font-semibold text-neutral-500">자동 복사가 막혔어요 — 아래를 길게 눌러 복사하세요</p>
+            <textarea readOnly value={promptText} rows={4} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white p-2 text-[11px] leading-relaxed text-neutral-700" onFocus={(e) => e.currentTarget.select()} />
+          </div>
+        )}
         {/* 배경 종류 — 실사 기본(주제 사진 깔고 정중앙 문구). 내 사진=유저 업로드(무료) */}
         <p className="mt-4 text-[13px] font-bold text-neutral-700">배경</p>
         <div className="mt-2 grid grid-cols-4 gap-1.5">

@@ -163,6 +163,46 @@ export function buildThumbScenePromptEn(topicEn: string, koKeyword: string, lane
   ].join(" ");
 }
 
+// ── v4(2026-08-17): 설계 장면(designThumbScene) → 최종 프롬프트 — 하드 규칙(여백·금지)은 코드가 강제 ──
+import type { DesignedScene } from "./thumbScene";
+export function buildThumbPromptFromDesign(d: DesignedScene, keyword: string, lane: ImageLane = "home", seed?: number | string): string {
+  const mood = MOODS[(typeof seed === "number" ? seed : fnv(`${keyword}|${seed ?? ""}`)) % MOODS.length]!;
+  const laneTone = lane === "search"
+    ? "검색형 정보글 썸네일이므로 과한 감정보다 주제와 상황이 명확하게 전달되도록."
+    : "홈피드에서 스크롤을 멈추게 하는 강한 생활경제 장면 — 표정과 몸짓에서 감정이 0.5초 안에 읽히게.";
+  return [
+    `${mood.ko}의 부드럽고 깔끔한 2D 일러스트.`,
+    `${d.placeKo}에서 한국의 ${d.personaKo} 1명이 ${d.actionKo} 장면을 상반신 위주로 크게 보여준다.`,
+    `감정은 ${d.emotionKo} — 하나만 분명하게, 표정과 손짓에 드러나게.`,
+    `소품은 ${d.propsKo[0]}, ${d.propsKo[1]}까지만.`,
+    `★주제 앵커(반드시 그림에 보이게): ${d.anchorKo} — 이 요소가 있어야 '${keyword}' 글의 썸네일임이 1초 안에 전해진다. 단 글자·숫자 없이.`,
+    "인물은 크게(상반신 클로즈업 — 얼굴과 손이 작게 보이면 실패), 배경은 매우 단순하게.",
+    MARGIN_KO,
+    laneTone,
+    THUMB_BAN_KO,
+    "모바일 썸네일 용도이므로 작은 크기에서도 감정과 핵심 장면이 즉시 읽히게.",
+  ].join(" ");
+}
+export function buildThumbPromptFromDesignEn(d: DesignedScene, topicEn: string, lane: ImageLane = "home", seed?: number | string): string {
+  const mood = MOODS[(typeof seed === "number" ? seed : fnv(`${topicEn}|${seed ?? ""}`)) % MOODS.length]!;
+  const laneTone = lane === "search"
+    ? "This is for an informational search-result thumbnail: clarity of situation over exaggerated emotion."
+    : "This is for a social home feed: a strong everyday-money moment that stops the scroll — the emotion must read within half a second.";
+  return [
+    `Soft, clean 2D flat illustration in ${mood.en}.`,
+    `In ${d.placeEn}, ONE Korean person — ${d.personaEn} — is ${d.actionEn}, shown large from the waist up.`,
+    `Their emotion: ${d.emotionEn} — exactly one emotion, clearly visible in the face and hands.`,
+    `Props: only ${d.propsEn[0]} and ${d.propsEn[1]}, nothing else.`,
+    `TOPIC ANCHOR (must be clearly visible): ${d.anchorEn} — this element tells viewers in one second what the article is about. It must work WITHOUT any letters or numbers.`,
+    `Topic context (understand only — never render as text): "${topicEn}".`,
+    "Place the person large (close-up from the waist up — if the face or hands look small, it fails). Keep the background extremely simple.",
+    MARGIN_EN,
+    laneTone,
+    THUMB_BAN_EN,
+    "This is a mobile thumbnail: the emotion and the moment must read instantly even at small sizes. Square 1:1, full-bleed, no frames or borders.",
+  ].join(" ");
+}
+
 // 본문 역할 자동 판별 — 슬롯 설명에서 유추(SCENE/EVIDENCE/EXPLAIN/REST)
 export function inferBodyRole(sceneDesc: string): BodyImageRole {
   const t = String(sceneDesc ?? "");
@@ -181,16 +221,16 @@ const ROLE_LINE: Record<BodyImageRole, string> = {
 
 /** 본문 — 읽는 흐름을 돕는 것. 썸네일보다 감정이 약해야 한다. */
 export function buildBodyImagePrompt(sceneDesc: string, keyword: string, role?: BodyImageRole): string {
-  void keyword;
   const r = role ?? inferBodyRole(sceneDesc);
   return [
     "깔끔하고 부드러운 2D 일러스트.",
     `${sceneDesc.trim()} 장면을 보여준다.`,
+    keyword?.trim() ? `이 글의 주제 '${keyword.trim()}'가 연상되는 시각 요소를 최소 1개 담는다(글자·숫자 없이 그릴 수 있는 것만).` : "",
     "한국의 생활경제/직장인 맥락에 어울리게, 과한 표정이나 과장된 연출은 줄이고 본문 내용을 보조하는 자연스러운 장면으로 표현.",
     ROLE_LINE[r],
     "배경은 단순하되 썸네일보다는 조금 더 문맥이 느껴지게. 소품은 3개 이내.",
     "정보글 본문에 들어갈 이미지이므로 설명을 방해하지 않도록 차분하고 정돈된 분위기.",
     "텍스트가 없어도 의미가 전달되게 — 이미지 안에 글자·숫자·로고 금지.",
     "너무 광고 같거나 자극적인 구도는 피한다.",
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 }

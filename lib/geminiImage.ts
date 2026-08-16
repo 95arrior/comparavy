@@ -307,8 +307,14 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
   //  photo 경로는 파스텔 생활 장면(imagePrompts 영어 미러, 장면 변주 엔진+하단 35% 여백 하드 규칙)으로.
   //  toss(색면) 경로만 종전 은유 프롬프트 유지. 가독은 합성 단계의 하단 그라데이션+텍스트 섀도가 담당.
   if ((opts?.forceStyle ?? "photo") === "photo") {
-    const { buildThumbScenePromptEn } = await import("./imagePrompts");
-    return callImage(buildThumbScenePromptEn(safeTopic, rawTopic, opts?.lane ?? "home", seed), "1:1");
+    // ★v4(2026-08-17): 장면 설계 우선 — 주제 앵커(띠별 세금→십이지 달력)가 박힌 글 맞춤 장면. 실패 시 v3 정규식.
+    const { buildThumbScenePromptEn, buildThumbPromptFromDesignEn } = await import("./imagePrompts");
+    const { designThumbScene } = await import("./thumbScene");
+    const design = await designThumbScene(rawTopic, rawTopic, opts?.lane ?? "home", userSeed).catch(() => null);
+    const prompt = design
+      ? buildThumbPromptFromDesignEn(design, safeTopic, opts?.lane ?? "home", seed)
+      : buildThumbScenePromptEn(safeTopic, rawTopic, opts?.lane ?? "home", seed);
+    return callImage(prompt, "1:1");
   }
   const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed, { textSafe: opts?.textSafe, deepBg: true });
   return callImage(prompt, "1:1");
