@@ -741,7 +741,7 @@ export default function Home({
           })()}
           {/* ★결핍 레이더 카드 내림(2026-08-11 유저 지시 — 픽이 초니치 롱테일로 흘러 "풀이 너무 작다"). 코드는 보존.
               후속 = 머니 랭킹 카드(작전 승인 2026-08-11): 뉴스 랭킹 돈 소재, 하루 4회 자동 교체+카운트다운, 검색각/홈판각 분기 */}
-          <MoneyRankCard onWrite={(kw, newsContext, sel) => onWriteKeyword(kw, kw, newsContext, undefined, undefined, undefined, { sel })} />
+          <MoneyRankCard onWrite={(kw, newsContext, sel, brief) => onWriteKeyword(kw, kw, newsContext, brief, undefined, undefined, { sel })} />
           {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
           <div className="mb-2 flex justify-end gap-1.5">
             {ffPerf && (

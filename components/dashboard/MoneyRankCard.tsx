@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * 카운트다운을 상시 명시(유저: "명시해주거나 카운트다운"). 소재마다 검색각(게이트 통과)·홈판각(붐빔=대중 관심) 분기.
  */
 
-interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean }; big?: boolean }
+interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean }; big?: boolean; hfScore?: number; hfAngle?: string }
 
 /** ★소재 근접 중복 배지(2026-08-11 유저: "글 썼던 건 표기 좀 — 발행완료까지 된 건 중복 걱정") — 막지 않고 알린다 */
 function SimilarChip({ similar }: { similar?: { title: string; published: boolean } }) {
@@ -53,7 +53,7 @@ const CAT_COLOR: Record<string, string> = {
   부동산: "bg-indigo-50 text-indigo-500", 세금: "bg-cyan-50 text-cyan-600", 생활비: "bg-orange-50 text-orange-500", 앱테크: "bg-violet-50 text-violet-500",
 };
 
-export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, newsContext: string | undefined, sel: Record<string, unknown>) => void }) {
+export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, newsTitle?: string, sel?: Record<string, unknown>, brief?: string) => void }) {
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Item[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -157,8 +157,12 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
                     className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-emerald-600 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-emerald-50 disabled:opacity-60">
                     {gap === "loading" ? "빈틈 찾는 중…" : "빈틈 찾기"}
                   </button>
-                  <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs })}
-                    className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[#1D75F7] shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-[#F5F9FF]">
+                  {/* ★홈판 점수 게이트(2026-08-17 유저 설계: 70 미만이면 홈판 버튼 자체를 비활성 — 홈판 정체성은 '오늘 내 돈에 생긴 일') */}
+                  {(i.hfScore ?? 0) > 0 && <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums ${(i.hfScore ?? 0) >= 70 ? "bg-[#F5F0FF] text-[#7C3AED]" : "bg-neutral-100 text-neutral-400"}`} title={i.hfAngle ? `홈판 각도: ${i.hfAngle}` : "홈판 점수"}>홈판 {i.hfScore}</span>}
+                  <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs, hfScore: i.hfScore ?? null }, i.hfAngle ? `홈판 각도(파급효과): ${i.hfAngle} — 뉴스 사건 요약이 아니라 이 각도(내 돈에 생긴 일)로 쓴다.` : undefined)}
+                    disabled={(i.hfScore ?? 100) < 70}
+                    title={(i.hfScore ?? 100) < 70 ? `홈판 점수 ${i.hfScore} — 70 미만은 홈판 각이 아니에요(검색각·빈틈으로)` : undefined}
+                    className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[#1D75F7] shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-[#F5F9FF] disabled:cursor-default disabled:opacity-35">
                     홈판각 쓰기
                   </button>
                 </div>

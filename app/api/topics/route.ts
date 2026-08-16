@@ -1571,6 +1571,12 @@ export async function GET(req: Request) {
     const docMax = tbCut?.blogTotalMax ?? DOC_HARD_MAX;
     {
       const need = (tailMode === "long" ? 10 : PICK) + 4; // 뒤 단계(중복·유사 배제)가 깎을 몫까지 여유
+      // ★수요 우선(2026-08-17 유저: "문서 2,000개라도 검색량 하루 5면 1등 해봐야 의미가 없다") —
+      //  ①수요 하한: 월 240회(일 8) 미만은 꾸준 열 자격 없음(측정된 것만 판정, 미측정은 통과)
+      //  ②정렬: 문서수가 아니라 수요÷경쟁(vol/docs) 비율 내림차순 — 문서수는 컷(applyDocCut)이지 정렬이 아니다
+      fitTop = fitTop.filter((x) => { const v = x.r.monthly_searches; return v == null || v === 0 || v >= 240; });
+      fitTop = fitTop.map((x) => ({ x, ratio: (x.r.monthly_searches ?? 0) > 0 ? (x.r.monthly_searches ?? 0) / Math.max(1, x.r.blog_total ?? 1) : -1 }))
+        .sort((a, b) => b.ratio - a.ratio).map((e) => e.x);
       const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need, hardMax: EVERGREEN_TOPUP_MAX }); // ★꾸준 열 보충은 5,000까지만(2026-08-17)
       if (debugMode) diag.docMeasure = measureDiag;
       if (debugMode) diag.docCut = { docMax, hardMax: DOC_HARD_MAX, before: fitTop.length, within: cut.within, over: cut.over, refilled: cut.refilled, dropped: cut.dropped, refillMax: cut.kept.reduce((m, x) => Math.max(m, x.r.blog_total ?? 0), 0) };

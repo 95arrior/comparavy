@@ -49,6 +49,10 @@ export interface MoneyRankItem {
   similar?: { title: string; published: boolean };
   /** ★대형 스파이크 후보(2026-08-12 판정: 300 벽의 답은 니치 수십 편이 아니라 SK하이닉스급 대형 히트 재현) */
   big?: boolean;
+  /** ★홈판 점수(2026-08-17 유저 설계: 대중성25+내돈20+지금성15+반전15+갈등10+이미지화10+댓글5, 70 미만=홈판각 비활성) */
+  hfScore?: number;
+  /** ★파급효과 각도 — 뉴스 사건이 아니라 '뉴스→내 돈→갈등→선택' 변환 한 줄(홈판각 쓰기의 브리프가 된다) */
+  hfAngle?: string;
 }
 
 // 근접 중복 판별용 실질 토큰 — 어느 소재에나 붙는 범용어는 겹침으로 안 센다
@@ -107,7 +111,10 @@ export async function condenseRanking(titles: string[], userId?: string | null):
         "- 제목이 '이곳·이것·~한 곳'으로 이름을 숨겼으면, 제목의 다른 단서로 실명을 알 때만 실명으로 kw를 만들어라. 모르면 그 소재는 버려라(지어내기 금지).",
         "- issue = 사람이 알아보는 소재 한 줄(15자 내), newsTitle = 원 제목 그대로.",
         "★big 판정(2026-08-12 확정 — 일 300 벽의 답은 대형 히트 재현): 전 국민이 아는 실명(대기업·유명 브랜드·전국 제도)이 낀 '사건'이면 big=true. 기준은 'SK하이닉스 1분 퇴근 10억 판결'급 — 검색 폭발이 예상되는 소재. 일반 니치 정보는 big=false.",
-        '출력 JSON 배열만: [{"issue":"청년도약계좌 140만 돌파","kw":"청년도약계좌 가입 조건","cat":"지원금","big":false,"newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순.',
+        "★홈판 평가(2026-08-17 유저 설계 — 홈판 정체성은 '오늘 나온 경제뉴스'가 아니라 '오늘 내 돈에 생긴 일'):",
+        "  hfScore = 100점 휴리스틱: 대중성 25(지갑 직결 소재 — ATM수수료·카드값·적금·월급·전기요금·배달비·보험료·대출이자·관리비·세금·환급금·국민연금·퇴직금이면 만점, '2차전지 전환사채'류 산업 이슈는 바닥) + 내 돈 관련성 20 + 지금성 15 + 반전·의외성 15 + 선택·갈등 10 + 이미지화 가능성 10(돈이 빠져나가는 '장면'이 그려지나) + 댓글 논쟁성 5.",
+        "  hfAngle = 뉴스 사건이 아니라 파급효과로 변환한 홈판 각도 한 줄: '뉴스→내 돈→갈등→선택' 구조. 예: 금융정책 뉴스 → '월급은 그대로인데 다음 달부터 이 돈이 더 빠져나간다' / '30대 직장인이 가장 먼저 확인할 건 따로 있다'. 검색형 요약('대상·조건 총정리') 금지 — 스크롤 멈추는 각도만.",
+        '출력 JSON 배열만: [{"issue":"청년도약계좌 140만 돌파","kw":"청년도약계좌 가입 조건","cat":"지원금","big":false,"hfScore":82,"hfAngle":"월급날 자동이체보다 먼저 확인할 게 생겼다","newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순.',
         "",
         ...titles.map((t) => `- ${t}`),
       ].join("\n"),
@@ -118,9 +125,9 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   const m = /\[[\s\S]*\]/.exec(t && t.type === "text" ? t.text : "");
   if (!m) return [];
   try {
-    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; newsTitle?: string }[];
+    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; hfScore?: number; hfAngle?: string; newsTitle?: string }[];
     return arr
-      .map((x) => ({ issue: stripStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: stripStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
+      .map((x) => ({ issue: stripStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: stripStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, hfScore: Math.max(0, Math.min(100, Math.round(Number(x.hfScore ?? 0)))), hfAngle: stripStaleYear(String(x.hfAngle ?? "").trim()).slice(0, 60), newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
       .filter((x) => x.keyword.length >= 2 && x.issue.length >= 2)
       .filter((x) => !isEntertainmentTopic(`${x.issue} ${x.keyword} ${x.newsTitle}`)) // ★엔터 컷 공유(2026-08-17) — 랭킹 뉴스의 영화·흥행 소재 차단
       .slice(0, 10);

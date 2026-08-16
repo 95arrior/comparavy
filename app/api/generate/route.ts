@@ -349,9 +349,9 @@ export async function POST(request: Request) {
         if (narrativeMode) console.log(`[narrative] user=${user.id.slice(0, 8)} 홈판 서사 모드 ON (${selMeta?.species ?? "?"})`);
         // ★홈피드 제목 파이프(2026-08-14 유저 확정: "99% 홈판 — CTR 카피라이터로서 후보→선정→본문 연결")
         const hfTitle = channel === "naver" && !userTitle
-          ? await pickHomefeedTitle({ keyword, brief: typeof body.angleBrief === "string" ? body.angleBrief : null, news: resolvedNewsContext, recentTitles, userId: user.id })
+          ? await pickHomefeedTitle({ keyword, brief: typeof body.angleBrief === "string" ? body.angleBrief : null, news: resolvedNewsContext, recentTitles, userId: user.id, narrative: narrativeMode })
           : null;
-        const hfDirective = hfTitle ? ` ★제목 확정(홈피드 CTR 픽): "${hfTitle.title}" — 제목은 반드시 이것을 글자 그대로 쓴다. 도입 첫 2~3문장은 이 제목이 건 약속(질문·숫자·상황)에 바로 답한다 — 약속과 다른 도입은 낚시라 확산이 죽는다.` : "";
+        const hfDirective = hfTitle ? ` ★제목 확정(홈피드 CTR 픽): "${hfTitle.title}" — 제목은 반드시 이것을 글자 그대로 쓴다. 도입 첫 2~3문장은 이 제목이 건 약속(질문·숫자·상황)에 바로 답한다 — 약속과 다른 도입은 낚시라 확산이 죽는다.${hfTitle.thumbConcept ? ` ★대표 이미지 장면(제목과 한 세트로 뽑힌 썸네일 콘셉트): "${hfTitle.thumbConcept}" — 첫 번째 [사진:] 지시를 이 장면으로 쓴다(차트·그래프 금지, 경제 때문에 벌어진 장면).` : ""}` : "";
         if (hfTitle) console.log(`[hf-title] user=${user.id.slice(0, 8)} "${hfTitle.title}" (${hfTitle.why})`);
         const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction: `${variantInstruction}${hfDirective}`, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon + titleDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, homefeedNarrative: narrativeMode, calcContext: financeCalcContext(keyword) };
         // ★재생성 무음화 + 상한(2026-07-24 멈춤·재작성 조사): 가드 재생성이 클라이언트로 스트리밍되면 이미 뜬 완성

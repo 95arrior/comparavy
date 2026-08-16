@@ -51,7 +51,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 {
   ok(emojiCount("<p>글자만 있습니다</p>") === 0, "이모지 0개를 0으로 센다");
   ok(emojiCount("<p>📌 핵심 ✅ 확인</p>") === 2, "이모지 개수를 정확히 센다");
-  ok(EMOJI_MIN >= 2, `하한 ${EMOJI_MIN}개 이상`);
+  ok(EMOJI_MIN === 0, `★이모지 하한 폐지(2026-08-17 유저: 최솟값 강제는 반복 문법) — 현재 ${EMOJI_MIN}`);
 }
 
 // ── ④ 사진 슬롯 부족 ───────────────────────────────────────────────────
@@ -184,7 +184,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
     ok(new RegExp(fn).test(gr), `★${label} 게이트가 생성 경로에 배선됨`);
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/띄어쓰기\(2026-08-02 실측 결함\)/.test(ap), "프롬프트에도 띄어쓰기 규격 명시");
-  ok(/이모지 하한 5~8/.test(ap), "프롬프트에도 이모지 하한 명시(2026-08-17 복원 — 5~8, EMOJI_MIN과 짝)");
+  ok(/필요할 때만 0~4개/.test(ap), "★프롬프트가 이모지 상한 문법을 쓴다(2026-08-17 반전: 최솟값 강제는 반복 문법 — 하한 폐지·상한 4)");
 }
 
 
@@ -484,7 +484,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ];
   const body = "<p>본문</p><p>마무리 문장</p>";
   const r = ensureRelatedLinks(body, posts);
-  ok((r.match(/\[마무리관련글:/g) ?? []).length === 3, "★없으면 3개를 붙인다(모델에 맡기지 않는다)");
+  ok((r.match(/\[마무리관련글:/g) ?? []).length === 2, "★없으면 2개를 붙인다(2026-08-17: 기계적 3개→문맥 1~2개)");
   ok(!/\| 중복 글/.test(r), "★같은 URL은 한 번만 — 트래킹 파라미터 달라도 같은 글이다");
   ok(!/연결 이유|유리합니다/.test(r), "★설명 문장을 넣지 않는다");
   ok(ensureRelatedLinks(body, []) === body, "★후보가 없으면 그대로 둔다");
@@ -494,10 +494,10 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   const husk = body + "<p>[마무리관련글: | 출산지원금 타임라인]</p><p>[마무리관련글: | 배달 라이더 수입]</p><p>[마무리관련글: | 정부지원금 대출]</p>";
   const r3 = ensureRelatedLinks(husk, posts);
   ok(!/\[마무리관련글:\s*\|/.test(r3), "★URL 없는 껍데기 마커는 남지 않는다(실측 사고)");
-  ok((r3.match(/\[마무리관련글: https/g) ?? []).length === 3, "★껍데기를 걷어내고 진짜 주소 3개를 붙인다");
+  ok((r3.match(/\[마무리관련글: https/g) ?? []).length === 2, "★껍데기를 걷어내고 진짜 주소 2개를 붙인다");
   const modelMade = body + "<p>[마무리관련글: https://a/1 | 제목1]</p><p>[마무리관련글: https://a/2 | 제목2]</p>";
   const r4 = ensureRelatedLinks(modelMade, posts);
-  ok(!/https:\/\/a\/1/.test(r4) && (r4.match(/\[마무리관련글:/g) ?? []).length === 3, "★모델이 쓴 마커는 유효해도 버리고 코드가 다시 만든다(자리의 주인은 하나)");
+  ok(!/https:\/\/a\/1/.test(r4) && (r4.match(/\[마무리관련글:/g) ?? []).length === 2, "★모델이 쓴 마커는 유효해도 버리고 코드가 다시 만든다(자리의 주인은 하나)");
   ok(!/<p>\s*<\/p>/.test(r4), "★마커만 있던 문단은 문단째 걷어낸다(빈 여백 금지)");
 
   // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다(오늘 다섯 번 겪었다)
@@ -545,10 +545,10 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
   // ★강조 하한 — 상한만 있고 하한이 없어서 0개로 나가도 아무도 몰랐다
   const plain = "<p>" + "가".repeat(600) + "</p>";
   const em = emphasisShortfall(plain);
-  ok(em !== null && em.bold === 0 && em.mark === 0, "★강조가 0인 글을 잡는다");
+  ok(em !== null && em.bold === 0, "★볼드가 0인 글을 잡는다(형광 하한은 2026-08-17 폐지 — 볼드 최소만)");
   ok(emphasisShortfall("<p>짧은 글</p>") === null, "짧은 글은 강조가 없어도 통과");
-  const rich = "<p>" + "가".repeat(600) + "<b>핵심</b></p><p><b>결론</b> <mark>하나</mark> <mark>둘</mark> <mark>셋</mark></p>";
-  ok(emphasisShortfall(rich) === null, "굵은 글씨 2곳 + 형광 3곳이면 통과(MARK_MIN=3, 2026-08-11 상향)");
+  const rich = "<p>" + "가".repeat(600) + "<b>핵심</b></p><p><b>결론</b></p>";
+  ok(emphasisShortfall(rich) === null, "굵은 글씨 2곳이면 형광 0이어도 통과(2026-08-17 형광 하한 폐지)");
   // 형광펜은 표기가 바뀐다 — 결과(배경색)로 센다(게이트 중앙화 원칙)
   const styled = "<p>" + "가".repeat(600) + "<b>가</b></p><p><b>나</b> <b style=\"background:#ff0\">다</b> <b style=\"background:#ff0\">라</b> <b style=\"background:#ff0\">마</b></p>";
   ok(emphasisShortfall(styled) === null, "★<mark> 대신 배경색을 써도 형광으로 센다");
