@@ -256,8 +256,9 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
         el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } }),
         // ★전면 오버레이 폐지(2026-08-17 유저: "전체 블러 하지 말고 하단만") — 이미지 v2가 상반신 클로즈업+하단 여백을
         //  주므로 상단은 원본 그대로 두고, 문구가 앉는 하단만 그라데이션으로 어둡게. 가독은 텍스트 섀도(0.72)와 분담.
-        // ★비율 조정(2026-08-17 유저 실물: 문구가 중간까지 올라오고 아래 빈 어둠이 큼) — 그라데이션을 38%로 압축해 일러스트를 더 살린다
-        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(0deg, rgba(6,8,14,0.82), rgba(6,8,14,0.46) 22%, rgba(0,0,0,0) 38%)" } }),
+        // ★자연 스크림(2026-08-17 유저: "그라데이션이 너무 어설픈데") — 3단 직선 보간은 어둠이 끝나는 경계선이
+        //  보인다. 완화 곡선(ease-out) 9스톱으로 교체 — 끝자락일수록 옅게 길게 빠져 경계가 사라진다.
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(0deg, rgba(6,8,14,0.85) 0%, rgba(6,8,14,0.78) 10%, rgba(6,8,14,0.65) 18%, rgba(6,8,14,0.50) 25%, rgba(6,8,14,0.35) 31%, rgba(6,8,14,0.22) 36%, rgba(6,8,14,0.12) 41%, rgba(6,8,14,0.05) 45%, rgba(6,8,14,0) 50%)" } }),
       ] : [
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 28% 18%, ${shade(flatBase, isDark(p.bg) ? 38 : 26)}, ${shade(flatBase, isDark(p.bg) ? -8 : -16)})` } }),
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 76% 82%, ${rgba(shade(p.point, isDark(p.bg) ? 16 : 24), isDark(p.bg) ? 0.55 : 0.42)} 0%, rgba(0,0,0,0) 55%)` } }),
