@@ -915,7 +915,7 @@ export default function Home({
                       </div>
                     )}
                     {!tailLoading && !analyzing && tailMode === "long" && (tailTopics ?? []).length === 0 && (
-                      <p className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">꾸준한 수요 글감을 모으는 중이에요.</p>
+                      <p className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] leading-relaxed text-neutral-400">지금은 이길 수 있는 검색 판(문서 5,000편 미만)이 없어요.<br/><span className="text-[12px]">일부러 비워둔 거예요 — 못 이길 카드로 채우지 않아요. 재고가 차면 다시 떠요.</span></p>
                     )}
                   </div>
                 ) : (
