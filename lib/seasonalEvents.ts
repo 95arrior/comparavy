@@ -1,0 +1,99 @@
+// 한국 시즌/이벤트 — 다가오는 시즌을 "지금 쓰면 선점" 으로 알린다. (외부 API 없음, 하드코딩)
+// categories는 대분류(lib/categories.ts) 이름. 비어 있으면 모든 카테고리에 노출.
+
+interface SeasonEvent {
+  name: string;
+  emoji: string;
+  message: string;
+  categories: string[]; // 빈 배열 = 전체
+  month?: number; // 매년 반복(월)
+  day?: number; // 매년 반복(일)
+  dates?: string[]; // 음력 등 연도별 명시(yyyy-mm-dd)
+  /** 씨앗 리드타임(일) — 대형 연례 키워드는 폭발 4~6주 전 심어야 색인·체류가 쌓인 채 폭발을 맞는다(기본 14) */
+  lead?: number;
+}
+
+const EVENTS: SeasonEvent[] = [
+  { name: "연말정산", emoji: "🧾", message: "절세·환급 글을 지금 쓰면 검색 선점!", categories: ["재테크", "부업", "정부지원금/생활정보"], month: 1, day: 15, lead: 45 },
+  // ── 경제 연례 캘린더(2026-07-10 유저: 캘린더 글감 — 매년 찾는 글을 폭발 전에 심는다) ──
+  { name: "재산세 납부", emoji: "🏠", message: "7월 재산세 — 납부 기간·카드 혜택 검색 급증", categories: ["재테크", "정부지원금/생활정보"], month: 7, day: 16, lead: 30 },
+  { name: "재산세 2기분", emoji: "🏠", message: "9월 재산세 2기분 — 조회·분납 검색 시즌", categories: ["재테크", "정부지원금/생활정보"], month: 9, day: 16, lead: 30 },
+  { name: "주민세 납부", emoji: "🧾", message: "8월 주민세 — 납부 방법·감면 검색 시즌", categories: ["재테크", "정부지원금/생활정보"], month: 8, day: 16, lead: 21 },
+  { name: "근로장려금 반기 신청", emoji: "💰", message: "9월 근로장려금 반기 — 자격·신청 검색 급증", categories: ["재테크", "부업", "정부지원금/생활정보"], month: 9, day: 1, lead: 30 },
+  { name: "연말정산 미리보기", emoji: "🔍", message: "홈택스 미리보기 오픈 — 남은 두 달 절세 전략 시즌", categories: ["재테크", "부업"], month: 11, day: 1, lead: 30 },
+  { name: "종합부동산세", emoji: "🏢", message: "12월 종부세 고지 — 계산·이의신청 검색 시즌", categories: ["재테크"], month: 12, day: 1, lead: 30 },
+  { name: "연금저축·IRP 막차", emoji: "🎯", message: "세액공제 한도 채우기 — 12월 막차 검색 급증", categories: ["재테크"], month: 12, day: 10, lead: 40 },
+  { name: "자동차세 연납", emoji: "🚗", message: "1월 연납 신청 — 할인율·신청 방법 검색 급증", categories: ["재테크", "자동차", "정부지원금/생활정보"], month: 1, day: 10, lead: 30 },
+  { name: "부가세 1기 확정신고", emoji: "🧮", message: "1월 부가세 — 사업자 신고·환급 시즌", categories: ["부업", "재테크"], month: 1, day: 25, lead: 21 },
+  { name: "새해 다이어트", emoji: "🏃", message: "새해 결심 시즌 — 다이어트·운동 검색 폭증", categories: ["건강", "뷰티", "요리"], month: 1, day: 1 },
+  { name: "발렌타인데이", emoji: "🍫", message: "초콜릿·선물 키워드가 뜨는 시기", categories: ["요리", "뷰티"], month: 2, day: 14 },
+  { name: "봄 이사철", emoji: "📦", message: "이사철 — 부동산·인테리어 수요 상승", categories: ["재테크", "인테리어"], month: 3, day: 1 },
+  { name: "환절기 건강", emoji: "🌿", message: "환절기 — 건강관리 키워드 챙길 때", categories: ["건강", "반려동물"], month: 3, day: 1 },
+  { name: "어린이날", emoji: "🎈", message: "선물·나들이 키워드 미리 선점", categories: ["육아"], month: 5, day: 5 },
+  { name: "종합소득세 신고", emoji: "💸", message: "종소세 마감 — 환급·절세 검색 급증", categories: ["재테크", "부업"], month: 5, day: 31, lead: 40 },
+  { name: "여름 휴가철", emoji: "🏖️", message: "여행·캠핑 검색이 가장 뜨거운 시기", categories: ["여행", "자동차"], month: 7, day: 15 },
+  { name: "반려동물 여름나기", emoji: "🐶", message: "더위·관리 키워드 수요 상승", categories: ["반려동물"], month: 7, day: 1 },
+  { name: "부가세 신고", emoji: "🧮", message: "사업자 부가세 — 자영업 키워드", categories: ["부업"], month: 7, day: 25 },
+  { name: "추석 연휴", emoji: "🌕", message: "차례·선물·귀성 키워드", categories: ["요리", "여행", "재테크"], dates: ["2026-09-25"] },
+  { name: "가을 이사철", emoji: "🍂", message: "이사철 — 부동산·인테리어 수요 상승", categories: ["재테크", "인테리어"], month: 10, day: 1 },
+  { name: "수능", emoji: "✏️", message: "수능 시즌 — 교육·입시 키워드", categories: ["교육/자격증", "육아"], month: 11, day: 13 },
+  { name: "김장철", emoji: "🥬", message: "김치·밑반찬 요리 키워드 시즌", categories: ["요리"], month: 11, day: 15 },
+  { name: "블랙프라이데이", emoji: "🛍️", message: "쇼핑·리뷰 검색 급증 — 리뷰 글 선점", categories: ["IT/리뷰", "패션", "뷰티"], month: 11, day: 29 },
+  { name: "연말 분양/청약", emoji: "🏗️", message: "연말 분양 — 청약 키워드", categories: ["재테크"], month: 12, day: 1 },
+  { name: "설 연휴", emoji: "🎍", message: "설 차례·세뱃돈·귀성 키워드", categories: ["요리", "여행", "재테크"], dates: ["2026-02-17"] },
+];
+
+export interface UpcomingEvent {
+  name: string;
+  emoji: string;
+  message: string;
+  dday: number; // 며칠 남음
+  dateLabel: string; // "M/D"
+}
+
+function nextDate(e: SeasonEvent, today: Date): Date | null {
+  const t = new Date(today); t.setHours(0, 0, 0, 0);
+  if (e.dates && e.dates.length) {
+    const future = e.dates.map((d) => new Date(d + "T00:00:00")).filter((d) => d.getTime() >= t.getTime()).sort((a, b) => a.getTime() - b.getTime());
+    return future[0] ?? null;
+  }
+  if (e.month && e.day) {
+    let d = new Date(t.getFullYear(), e.month - 1, e.day);
+    if (d.getTime() < t.getTime()) d = new Date(t.getFullYear() + 1, e.month - 1, e.day);
+    return d;
+  }
+  return null;
+}
+
+/** 카테고리에 맞는 '다가오는' 이벤트(향후 windowDays 내) D-day 순. */
+export function upcomingEvents(category: string | null, today: Date = new Date(), windowDays = 60, limit = 4): UpcomingEvent[] {
+  const t = new Date(today); t.setHours(0, 0, 0, 0);
+  const out: UpcomingEvent[] = [];
+  for (const e of EVENTS) {
+    if (e.categories.length && category && !e.categories.includes(category)) continue;
+    const d = nextDate(e, t);
+    if (!d) continue;
+    const dday = Math.round((d.getTime() - t.getTime()) / 86400000);
+    if (dday < 0 || dday > windowDays) continue;
+    out.push({ name: e.name, emoji: e.emoji, message: e.message, dday, dateLabel: `${d.getMonth() + 1}/${d.getDate()}` });
+  }
+  out.sort((a, b) => a.dday - b.dday);
+  return out.slice(0, limit);
+}
+
+/** ★씨앗층 주입용 — D-windowDays 이내 활성 이벤트를 검색형 씨앗으로. (뉴스 신선도 게이트 면제 — 예측 가능 이슈) */
+export function seasonalSeeds(category: string, today: Date = new Date(), windowDays = 14): { keyword: string; title: string }[] {
+  const t = new Date(today); t.setHours(0, 0, 0, 0);
+  const out: { keyword: string; title: string }[] = [];
+  for (const e of EVENTS) {
+    // 퍼지 매칭 — 이벤트 카테고리 토큰이 트렌드 카테고리에 포함되면 매치(예: '재테크' ⊂ '경제·재테크')
+    const matched = !e.categories.length || e.categories.some((c) => category.includes(c) || c.includes(category) || c.split("/").some((tk) => category.includes(tk)));
+    if (!matched) continue;
+    const d = nextDate(e, t);
+    if (!d) continue;
+    const dday = Math.round((d.getTime() - t.getTime()) / 86400000);
+    if (dday < 0 || dday > (e.lead ?? windowDays)) continue; // ★이벤트별 리드타임 — 대형 연례는 D-30~45 선점(2026-07-10)
+    out.push({ keyword: e.name, title: `${e.name} 미리 준비하면 좋은 것들` });
+  }
+  return out.slice(0, 3);
+}

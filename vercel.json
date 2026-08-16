@@ -1,0 +1,72 @@
+{
+  "crons": [
+    {
+      "path": "/api/billing/charge",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/social/publish-due",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/social/publish-due",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/social/refresh-token",
+      "schedule": "0 4 * * 1"
+    },
+    {
+      "path": "/api/cron/index-scan",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/trend-refresh",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/trend-refresh",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/verify-posts",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/pool-warm",
+      "schedule": "30 17,5 * * *"
+    },
+    {
+      "path": "/api/cron/wp-autopublish",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/rank-track",
+      "schedule": "20 1,7,13 * * *"
+    },
+    {
+      "path": "/api/cron/revision-scan",
+      "schedule": "40 17 * * 0"
+    },
+    {
+      "path": "/api/cron/gsc-sync",
+      "schedule": "10 19 * * *"
+    },
+    {
+      "path": "/api/cron/tier-scan",
+      "schedule": "40 1 * * 1"
+    },
+    {
+      "path": "/api/cron/doc-backfill",
+      "schedule": "15 */6 * * *"
+    },
+    {
+      "path": "/api/cron/event-density",
+      "schedule": "50 */3 * * *"
+    }
+  ]
+}

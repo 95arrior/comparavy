@@ -1,27 +1,791 @@
 @import "tailwindcss";
 
+/* 블랙 통일 — 토스 잉크(쿨 다크 슬레이트). bg/text/border-neutral-900 전부 이 색으로.
+   호버가 같은 계열로 밝아지도록 800·700도 쿨톤으로 맞춤. */
+/* ★디자인 토큰(1단계) — 이 팔레트·스케일 밖 값 사용 금지. 레퍼런스: 토스(색의 침묵)·Linear(위계)·애플(여백).
+   라이트 단일(다크모드 없음). 그라데이션·글래스·보라 금지. 상태색은 배지·상태 표시에만(장식 금지). */
+@theme {
+  /* 표면 */
+  --color-bg: #ffffff;
+  --color-bg-subtle: #fafafb;   /* 섹션 구분 — 카드 남발 대체 */
+  /* 텍스트 3단계뿐(중간톤 신설 금지) */
+  --color-text: #191f28;
+  --color-text-sub: #6b7684;
+  --color-text-weak: #8b95a1;
+  /* 브랜드 — 화면당 '지금 눌러야 할 것' 한 곳만 brand 원색 */
+  --color-brand: #1d75f7;
+  --color-brand-weak: #ebf3fe;  /* 배지·선택 배경 */
+  /* 선 — 보더는 이것 하나, 1px만 */
+  --color-line: #f2f4f6;
+  /* 상태색 — 배지·상태에만 */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  /* 기존 코드 호환(neutral-900 계열은 잉크로 통일 유지) */
+  --color-neutral-900: #191f28;
+  --color-neutral-800: #2a3038;
+  --color-neutral-700: #3c434d;
+  /* radius 3종만: 카드 12 / 버튼·인풋 8 / 배지·필 999 */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-pill: 999px;
+  /* 그림자 1종 — 떠 있는 요소(시트·모달)만. 구분은 여백과 line으로 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* 타이포 5단계뿐(중간 크기 신설 금지) — display는 핵심 숫자 전용 */
+  --text-display: 30px;
+  --text-display--line-height: 1.2;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+  --text-title: 20px;
+  --text-title--line-height: 1.35;
+  --text-title--font-weight: 600;
+  --text-body: 15px;
+  --text-body--line-height: 1.6;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.5;
+  /* 간격 스케일: 4/8/12/16/24/32만(= p-1/2/3/4/6/8). 임의 px 금지 */
+  /* 모션 표준 1종 — 의미 있는 곳만(링·스파크바·체크·시트). 장식 모션 금지 */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* 깊은 감속 — 끊김 금지 */
+  --duration-standard: 330ms;
+}
+
 :root {
-  --background: #fbfaf7;
-  --foreground: #172033;
+  --background: #ffffff;
+  --foreground: #191f28;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* ★디폴트 부드러움 — 모든 인터랙티브 요소의 호버·프레스가 항상 이 곡선을 탄다(딱딱함 금지) */
+button, a, [role="button"] {
+  transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), background-color var(--duration-standard) var(--ease-standard), color var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard);
+}
+
 body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Pretendard Variable", Pretendard, "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 한국어는 어절(띄어쓰기) 단위로 줄바꿈 — 단어 중간에서 어색하게 끊기는 것 방지 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.font-pretendard {
+  font-family: "Pretendard Variable", Pretendard, "Inter", system-ui, -apple-system, sans-serif;
 }
 
 html {
   scroll-behavior: auto;
+  /* 스크롤바가 생겨도 가운데 정렬 콘텐츠가 밀리지 않게 항상 자리 확보 */
+  scrollbar-gutter: stable;
 }
 
 .ateflo-surface {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ★토큰 시스템 표준 부품 — 카드·행·표준 트랜지션 (2~6단계에서 화면별로 갈아입힘) */
+.tk-card { background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-card); }
+.tk-section { background: var(--color-bg-subtle); border-radius: var(--radius-card); }
+.tk-tr { transition: all var(--duration-standard) var(--ease-standard); }
+/* 시네마틱 3종(홈 동결) — ①위계 순 120ms 스태거 페이드인 ②진행바 1회 차오름 ③CTA 호버 상승. 그 외 모션 금지 */
+@keyframes tk-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.tk-seq-1 { animation: tk-fade-up 0.45s var(--ease-standard) 0ms backwards; }
+.tk-seq-2 { animation: tk-fade-up 0.45s var(--ease-standard) 120ms backwards; }
+.tk-seq-3 { animation: tk-fade-up 0.45s var(--ease-standard) 240ms backwards; }
+@keyframes tk-bar-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.tk-bar-fill { transform-origin: left; animation: tk-bar-in 0.6s var(--ease-standard) 200ms both; }
+.tk-cta { transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard); }
+.tk-cta { transition-duration: 450ms; }
+.tk-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+/* ★메이트 감성 — 히어로 배너·떠다니는 오브·광택. */
+.tk-hero {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(560px 300px at 85% -20%, rgba(124, 108, 255, 0.55), transparent 60%),
+    radial-gradient(480px 300px at -10% 110%, rgba(34, 201, 232, 0.5), transparent 60%),
+    linear-gradient(135deg, #1246c4 0%, #1d75f7 55%, #2b8cff 100%);
+}
+.tk-hero::before, .tk-hero::after {
+  content: ""; position: absolute; border-radius: 999px; filter: blur(38px); pointer-events: none;
+}
+.tk-hero::before { width: 260px; height: 260px; right: -70px; top: -90px; background: rgba(124, 108, 255, 0.55); animation: tk-float 9s ease-in-out infinite alternate; }
+.tk-hero::after { width: 220px; height: 220px; left: -60px; bottom: -100px; background: rgba(34, 216, 194, 0.4); animation: tk-float 7s ease-in-out 1s infinite alternate-reverse; }
+@keyframes tk-float { from { transform: translate(0, 0) scale(1); } to { transform: translate(18px, 14px) scale(1.12); } }
+.tk-hero-cta {
+  background: #ffffff; color: #1d75f7;
+  box-shadow: 0 10px 26px -8px rgba(8, 30, 80, 0.45);
+  transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard);
+}
+.tk-hero-cta { transition-duration: 450ms; }
+.tk-hero-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -10px rgba(8, 30, 80, 0.5); }
+@keyframes tk-hero-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+.tk-hero-in { animation: tk-hero-in 0.6s var(--ease-standard) 80ms backwards; }
+/* 루틴 타일 아이콘 — 그라데이션 원 */
+.tk-icon-orb {
+  background: linear-gradient(135deg, #1d75f7, #7c6cff);
+  box-shadow: 0 6px 14px -6px rgba(29, 117, 247, 0.5);
+}
+.tk-grad-text {
+  background: linear-gradient(92deg, #1d75f7 10%, #7c6cff 55%, #22c9e8 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tk-grad-cta {
+  background: linear-gradient(135deg, #1d75f7 0%, #3d8bff 60%, #5aa4ff 100%);
+  box-shadow: 0 6px 18px -6px rgba(29, 117, 247, 0.45);
+  transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard);
+}
+.tk-grad-cta { transition-duration: 450ms; }
+.tk-grad-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(29, 117, 247, 0.5); }
+/* 게이지 — 그라데이션 fill + 광택이 계속 흐르는 sweep(살아있는 진행) */
+.tk-gauge { position: relative; overflow: hidden; }
+.tk-gauge-fill {
+  position: relative; height: 100%; border-radius: 999px; overflow: hidden; /* ★광택이 fill 밖으로 새지 않게 */
+  background: linear-gradient(90deg, #1d75f7, #4f9df9 55%, #28d8c2 100%);
+  transform-origin: left; animation: tk-bar-in 0.9s var(--ease-standard) 200ms both;
+}
+.tk-gauge-fill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.55) 50%, transparent 80%);
+  transform: translateX(-100%); animation: tk-sheen 2.4s ease-in-out 1s infinite;
+}
+@keyframes tk-sheen { 0% { transform: translateX(-100%); } 60% { transform: translateX(100%); } 100% { transform: translateX(100%); } }
+/* 카드 표면 — 흰색에 은은한 블루 틴트(메이트 카드 광) */
+.tk-card-glow { background: linear-gradient(160deg, #ffffff 55%, #f2f7ff 100%); }
+@keyframes tk-pop { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
+.tk-chip { animation: tk-pop 0.4s var(--ease-standard) backwards; }
+.tk-chip:nth-child(2) { animation-delay: 60ms; } .tk-chip:nth-child(3) { animation-delay: 120ms; } .tk-chip:nth-child(4) { animation-delay: 180ms; }
+.tk-dot { animation: tk-pop 0.3s var(--ease-standard) backwards; }
+@keyframes tk-wand {
+  0% { transform: rotate(0deg) scale(1); opacity: 1; }
+  30% { transform: rotate(-18deg) scale(1.25); opacity: 0.85; }
+  60% { transform: rotate(14deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+.tk-wand { display: inline-block; animation: tk-wand 1.1s ease-in-out infinite; }
+/* 크레딧 아이콘 — 차올랐다 가라앉는 부드러운 무한 루프(빠르지 않게) */
+@keyframes tk-float-soft {
+  0%, 100% { transform: translateY(0.5px); }
+  50% { transform: translateY(-1.5px); }
+}
+.tk-float-soft { animation: tk-float-soft 3.2s ease-in-out infinite; }
+/* 시트 얇은 스크롤바 */
+.at-thin-scroll::-webkit-scrollbar { width: 5px; }
+.at-thin-scroll::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.14); border-radius: 999px; }
+.at-thin-scroll::-webkit-scrollbar-track { background: transparent; }
+.at-thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.14) transparent; }
+
+/* 생성 시작 표시용 무지개 버튼 (흐르는 그라데이션) */
+@keyframes ateflo-rainbow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.ateflo-rainbow {
+  background-color: #1a1a1a; /* 그라데이션 못 그려도 버튼이 사라지지 않게 폴백 */
+  background-image: linear-gradient(90deg, #ff5f6d, #ffc371, #47c97e, #2ec5ce, #845ec2, #ff5f6d);
+  background-size: 200% 100%;
+  animation: ateflo-rainbow 1.2s linear infinite;
+  color: #fff;
+}
+
+/* 페이지 이동 시 좌 → 우로 부드럽게 들어옴 */
+@keyframes ateflo-page-in {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.ateflo-page-in {
+  /* backwards: 진입 애니메이션만, 끝난 뒤 transform을 남기지 않음
+     (both로 두면 transform이 남아 내부 position:fixed 요소가 화면이 아닌 이 박스 기준으로 잡혀,
+      스크롤 시 모바일 사이드바가 화면 밖으로 밀리는 버그가 생김) */
+  animation: ateflo-page-in 0.35s ease-out backwards;
+}
+
+/* 온보딩 스텝 전환: 부드러운 페이드+업 (토스 스타일, 한 번에 하나씩) */
+@keyframes ateflo-step-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ateflo-step-in {
+  animation: ateflo-step-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* 토스식 단계 전환 — 앞으로 갈 땐 오른쪽에서, 뒤로 갈 땐 왼쪽에서 부드럽게 슬라이드 */
+@keyframes ateflo-slide-fwd {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes ateflo-slide-back {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.ateflo-slide-fwd { animation: ateflo-slide-fwd 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.ateflo-slide-back { animation: ateflo-slide-back 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .ateflo-slide-fwd, .ateflo-slide-back { animation: ateflo-step-in 0.2s ease-out backwards; }
+}
+
+/* 가이드: 단계 박스가 아래에서 위로 올라오며 등장 */
+@keyframes ateflo-step-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+.ateflo-step-in {
+  animation: ateflo-step-in 0.4s ease-out backwards;
+}
+
+/* ── 프로 전환 축하 ─────────────────────────────────── */
+/* 파란 로고: 팝 등장 → 입 벌리며 한바퀴(360°) 돌고 사라짐 */
+@keyframes ateflo-celebrate-blue {
+  0%   { transform: scale(0); opacity: 0; --ateflo-gap: 21.6deg; }
+  16%  { transform: scale(1.28); opacity: 1; --ateflo-gap: 21.6deg; }  /* 통 튀어오름 */
+  30%  { transform: scale(0.9); --ateflo-gap: 21.6deg; }               /* 핑 */
+  44%  { transform: scale(1.08); --ateflo-gap: 21.6deg; }              /* 퐁 */
+  56%  { transform: scale(0.97); --ateflo-gap: 21.6deg; }
+  68%  { transform: scale(1); opacity: 1; --ateflo-gap: 21.6deg; }     /* 안착 */
+  100% { transform: scale(0.15) rotate(360deg); opacity: 0; --ateflo-gap: 75deg; }
+}
+.ateflo-celebrate-blue { animation: ateflo-celebrate-blue 2.1s cubic-bezier(0.45, 0, 0.4, 1) forwards; }
+
+/* 프로 무지개 로고: 파란 로고가 사라진 뒤 한바퀴(360°) 돌며 등장 */
+@keyframes ateflo-celebrate-pro {
+  0%, 55% { transform: scale(0.1) rotate(-360deg); opacity: 0; }  /* 파란 로고가 사라질 때까지 숨김 */
+  60%     { opacity: 1; }
+  82%     { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  92%     { transform: scale(0.95) rotate(0deg); }
+  100%    { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.ateflo-celebrate-pro { display: inline-block; animation: ateflo-celebrate-pro 2.6s cubic-bezier(0.4, 0, 0.3, 1) forwards; }
+
+/* 프로 로고의 입 움직임(chew) + 무지개 요동 — 한바퀴 돌며 등장한 '뒤'(약 1.5s)에 시작 */
+.ateflo-celebrate-pro-chew {
+  animation: ateflo-chew 0.85s ease-in-out 2.6s infinite, ateflo-mesh 11s ease-in-out 2.6s infinite;
+}
+
+/* 프로 전용 — 검색창 둘레를 무지개가 빙글빙글 도는 테두리 (입력창 모양은 안 돌고 색만 회전) */
+@property --ateflo-ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes ateflo-ring-spin {
+  to { --ateflo-ring-angle: 360deg; }
+}
+/* mask로 테두리만 도려내는 정석 기법 — 한 요소라 사방 두께가 균일하다 */
+.ateflo-rainbow-spin {
+  position: relative;
+}
+.ateflo-rainbow-spin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--ateflo-ring-angle),
+    rgba(63, 145, 255, 0.6), rgba(176, 107, 255, 0.6), rgba(255, 77, 109, 0.6),
+    rgba(255, 210, 58, 0.6), rgba(47, 208, 122, 0.6), rgba(63, 145, 255, 0.6)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ateflo-ring-spin 3.2s linear infinite;
+  pointer-events: none;
+}
+
+/* 폭죽 조각 */
+@keyframes ateflo-confetti {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  6%   { opacity: 1; }
+  100% { transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg)); opacity: 0; }
+}
+/* both: 발사 딜레이 동안엔 0%(투명) 상태를 유지 → 가운데에 점/네모가 깔려 보이던 문제 제거 */
+.ateflo-confetti { animation: ateflo-confetti 1.1s ease-out both; }
+
+/* 저장 완료 토스트: 위에서 살짝 내려오며 나타났다 사라짐 */
+@keyframes ateflo-toast {
+  0%   { opacity: 0; transform: translate(-50%, -10px); }
+  12%  { opacity: 1; transform: translate(-50%, 0); }
+  85%  { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -8px); }
+}
+.ateflo-toast { animation: ateflo-toast 2.2s ease-in-out both; }
+
+/* 발행 설정: 카테고리 입력/셀렉 전환, 칩 등장 애니메이션 */
+@keyframes ateflo-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ateflo-fade-in { animation: ateflo-fade-in 0.22s cubic-bezier(0.4, 0, 0.2, 1) both; }
+/* 돋보기 스캔 — 글감 '찾는 중' 로딩(좌우로 훑듯) */
+@keyframes ateflo-search-scan {
+  0%   { transform: translate(-5px, -2px) rotate(-9deg); }
+  50%  { transform: translate(5px, 3px) rotate(9deg); }
+  100% { transform: translate(-5px, -2px) rotate(-9deg); }
+}
+.ateflo-search-scan { animation: ateflo-search-scan 1.5s ease-in-out infinite; }
+/* 바텀 시트 — 아래에서 위로 부드럽게(모든 시트 공통) */
+@keyframes ateflo-sheet-up {
+  from { transform: translateY(60%); opacity: 0.4; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+/* 부드러운 슬라이드업 — 길게(0.55s)·깊은 감속(easeOutQuint) + 페이드. '딱 끊김' 금지 원칙. */
+.ateflo-sheet-up { animation: ateflo-sheet-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* 백드롭 페이드 */
+@keyframes ateflo-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+.ateflo-backdrop-in { animation: ateflo-backdrop-in 0.4s ease both; }
+@keyframes ateflo-chip-in {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.ateflo-chip-in { animation: ateflo-chip-in 0.16s cubic-bezier(0.34, 1.3, 0.64, 1) both; }
+/* 선택 시 톡 튀는 pop (세그먼트·옵션 칩 선택 피드백) */
+@keyframes ateflo-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.ateflo-pop { animation: ateflo-pop 0.26s cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+/* 완료 화면 — 원이 통 튀고 체크가 그려지듯 (파란색) */
+@keyframes ateflo-circle-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  55%  { transform: scale(1.15); opacity: 1; }
+  72%  { transform: scale(0.94); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.ateflo-circle-pop { animation: ateflo-circle-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+@keyframes ateflo-check-draw {
+  from { stroke-dashoffset: 40; }
+  to   { stroke-dashoffset: 0; }
+}
+.ateflo-check-draw { stroke-dasharray: 40; animation: ateflo-check-draw 0.42s 0.34s cubic-bezier(0.65, 0, 0.35, 1) both; }
+/* 입력칸/패널이 부드럽게 펼쳐지며 등장 */
+@keyframes ateflo-reveal {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ateflo-reveal { animation: ateflo-reveal 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* 박스(겉)는 먼저 살짝 부드럽게 자리잡음 */
+@keyframes ateflo-box-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.ateflo-box-in { transform-origin: top; animation: ateflo-box-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* 지도는 박스가 자리잡은 뒤(0.5s 딜레이) 아래에서 위로 천천히·부드럽게 */
+@keyframes ateflo-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ateflo-rise { animation: ateflo-rise 0.75s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* AI 반짝이 — 부드러운 홀로그램/오로라(블루 포인트, 7색 무지개 X)가 흐르듯 + 트윙클 */
+@keyframes ateflo-holo { 0% { background-position: 0% 50%; } 100% { background-position: 220% 50%; } }
+.ateflo-holo {
+  background-image: linear-gradient(100deg, #1D75F7, #6ea8ff, #b69cff, #5fd6e6, #1D75F7);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: ateflo-holo 3.6s ease-in-out infinite;
+}
+
+/* 텍스트 내부 오로라 — 색이 좌우로 일렁이며 요동(쿨톤: 블루·시안·바이올렛·퍼플) */
+@keyframes ateflo-aurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.ateflo-aurora {
+  background-image: linear-gradient(110deg, #1D75F7, #7c5cff, #00c2d6, #4f9bff, #b06cff, #1D75F7);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: ateflo-aurora 4s ease-in-out infinite;
+}
+
+/* 오로라 텍스트 + 5초마다 빛 한 줄 sweep(왼→오, 1.2s). background-position만 이동(리플로우 X) */
+@keyframes ateflo-aurora-sweep {
+  0%, 76% { background-position: 0% 50%; }
+  100% { background-position: -200% 50%; }
+}
+.ateflo-aurora-sweep {
+  background-image: linear-gradient(110deg, #1D75F7 0%, #7c5cff 30%, #ff7ad9 50%, #7c5cff 70%, #1D75F7 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: ateflo-aurora-sweep 5s ease-in-out infinite;
+}
+
+/* 글자 통통 튀기 — 한 번 튀고 5초 대기 후 반복(글자별 딜레이로 순서대로) */
+@keyframes ateflo-bounce {
+  0% { transform: translateY(0); }
+  3% { transform: translateY(-34%); }
+  6% { transform: translateY(0); }
+  8.5% { transform: translateY(-12%); }
+  11% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+.ateflo-bounce { display: inline-block; animation: ateflo-bounce 10s ease infinite; }
+/* 체크 팡! 링 버스트 (AiCompare 순차 등장) */
+@keyframes ateflo-pop-ring { 0% { transform: scale(0.5); opacity: 0.5; } 100% { transform: scale(2.4); opacity: 0; } }
+
+/* 채널 배지 — 각각 다르게 부드럽게 둥실(요동) + 오로라 글로우 호흡 (매직 느낌) */
+@keyframes ateflo-float1 { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(2.2deg); } }
+@keyframes ateflo-float2 { 0%, 100% { transform: translateY(-3px) rotate(1.4deg); } 50% { transform: translateY(7px) rotate(-2.4deg); } }
+@keyframes ateflo-float3 { 0%, 100% { transform: translateY(0) rotate(-1.6deg); } 34% { transform: translateY(-7px) rotate(1.8deg); } 67% { transform: translateY(5px) rotate(0deg); } }
+@keyframes ateflo-chglow { 0%, 100% { opacity: 0.25; transform: scale(0.82); } 50% { opacity: 0.6; transform: scale(1.25); } }
+.ateflo-ch1 { animation: ateflo-float1 3.6s ease-in-out infinite; }
+.ateflo-ch2 { animation: ateflo-float2 4.4s ease-in-out -0.9s infinite; }
+.ateflo-ch3 { animation: ateflo-float3 4.1s ease-in-out -1.8s infinite; }
+.ateflo-chglow { animation: ateflo-chglow 4.2s ease-in-out infinite; }
+/* 칩 내부 오로라 — 물감 번지듯, 여러 방울(radial)이 제각각 경로로 방랑 */
+@keyframes ateflo-chip-bloom {
+  0%   { background-position: 0% 0%,    100% 100%, 50% 50%; }
+  20%  { background-position: 55% 20%,  60% 80%,   90% 30%; }
+  40%  { background-position: 100% 60%, 10% 40%,   25% 90%; }
+  60%  { background-position: 35% 100%, 85% 10%,   70% 45%; }
+  80%  { background-position: 20% 45%,  45% 65%,   10% 20%; }
+  100% { background-position: 0% 0%,    100% 100%, 50% 50%; }
+}
+.ateflo-chip-bloom { background-size: 300% 300%, 320% 320%, 280% 280%; animation: ateflo-chip-bloom 8s ease-in-out infinite; }
+/* 입체 깃발 출렁임 — 칩 바깥 래퍼(transform). 내부 오로라(bloom)와 분리해 충돌 방지 */
+@keyframes ateflo-flag {
+  0%, 100% { transform: perspective(520px) rotateY(-6deg) rotateX(1.5deg) skewY(-0.7deg); }
+  50% { transform: perspective(520px) rotateY(6deg) rotateX(-1.5deg) skewY(0.7deg); }
+}
+.ateflo-flag { display: inline-block; transform-style: preserve-3d; animation: ateflo-flag 4s ease-in-out infinite; }
+
+/* 히어로 무빙 오로라 — 연파스텔(블루+옐로+민트)이 천천히 흐름(시네마틱). */
+@keyframes ateflo-hero-aurora {
+  0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%, 0% 100%; }
+  33% { background-position: 45% 25%, 70% 55%, 85% 20%, 25% 75%; }
+  66% { background-position: 80% 60%, 20% 40%, 25% 80%, 75% 30%; }
+}
+.ateflo-hero-aurora { background-size: 240% 240%; animation: ateflo-hero-aurora 13s ease-in-out infinite; }
+/* 풀페이지 슬라이드 중엔 무거운 배경 애니 멈춤(리페인트 렉 방지) */
+html.ateflo-sliding .ateflo-hero-aurora { animation-play-state: paused; }
+
+/* 이미지 드래그 잔상 방지(전역). 입력칸은 선택 가능 유지 */
+img { -webkit-user-drag: none; user-select: none; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+
+/* 헤드라인 업종 룰렛 — 아래에서 위로 슬라이드 인 */
+@keyframes ateflo-slot-up { 0% { transform: translateY(112%); opacity: 0; } 55% { opacity: 1; } 100% { transform: translateY(0); opacity: 1; } }
+.ateflo-slot-up { animation: ateflo-slot-up 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
+.ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
+/* 은은한 트윙클(칩 별용 — 과하지 않게) */
+@keyframes ateflo-twinkle-soft { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+.ateflo-twinkle-soft { display: inline-block; animation: ateflo-twinkle-soft 2.6s ease-in-out infinite; }
+
+/* 칩 배경 오로라 — 옅은 파스텔(블루·퍼플·핑크·민트)이 일렁이며 요동 */
+@keyframes ateflo-chip-aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.ateflo-chip-aurora {
+  background-image: linear-gradient(110deg, #dbe9ff, #e8ddff, #ffe1f1, #d9f5ec, #dbe9ff);
+  background-size: 300% 100%;
+  animation: ateflo-chip-aurora 5s ease-in-out infinite;
+}
+
+/* 글 생성 — 문단이 스르륵 올라오며 등장(따다다 대신 '써지는' 느낌) */
+@keyframes ateflo-block-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+.ateflo-block-in { animation: ateflo-block-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* 스켈레톤 shimmer — 완성될 글의 '틀' */
+@keyframes ateflo-skel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.ateflo-skel { background: linear-gradient(90deg, #eef1f6 25%, #f7f9fc 37%, #eef1f6 63%); background-size: 200% 100%; animation: ateflo-skel 1.5s ease-in-out infinite; border-radius: 7px; }
+
+/* 얇은 스크롤바 — 입력창 등 */
+.ateflo-thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(20,40,90,0.18) transparent; }
+.ateflo-thin-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.ateflo-thin-scroll::-webkit-scrollbar-track { background: transparent; }
+.ateflo-thin-scroll::-webkit-scrollbar-thumb { background: rgba(20,40,90,0.16); border-radius: 99px; }
+.ateflo-thin-scroll::-webkit-scrollbar-thumb:hover { background: rgba(20,40,90,0.28); }
+
+
+/* 카테고리 칩 등장 — 가운데에서 바깥으로 펼쳐지는 느낌(스태거) */
+@keyframes ateflo-cat-pop { 0% { opacity: 0; transform: scale(0.55); } 100% { opacity: 1; transform: scale(1); } }
+.ateflo-cat-pop { animation: ateflo-cat-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+
+/* 선택 시 무지개(오로라) 테두리가 한 바퀴 싹 도는 sweep */
+@property --ateflo-ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes ateflo-ring-sweep-kf { from { --ateflo-ang: 0deg; } to { --ateflo-ang: 360deg; } }
+.ateflo-ring-sweep::before {
+  content: "";
+  position: absolute; inset: -2px; border-radius: 9999px; padding: 2px;
+  background: conic-gradient(from var(--ateflo-ang), transparent 0deg, #1D75F7 50deg, #7c5cff 130deg, #00c2d6 210deg, #ff7ad9 290deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: ateflo-ring-sweep-kf 0.95s linear 1;
+  pointer-events: none;
+}
+
+/* 선택 클릭 느낌(살짝 눌렸다 복귀) */
+@keyframes ateflo-tap { 0% { transform: scale(1); } 35% { transform: scale(0.9); } 100% { transform: scale(1); } }
+.ateflo-tap { animation: ateflo-tap 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) 1; }
+
+/* 선택 시 빛이 왼쪽→오른쪽으로 한 번 스쳐 지나가는 샤인 */
+@keyframes ateflo-shine-kf { from { transform: translateX(-130%); } to { transform: translateX(240%); } }
+.ateflo-shine::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  animation: ateflo-shine-kf 0.9s ease-out 1;
+  pointer-events: none;
+}
+
+/* 매직봉 — 살짝 흔들리며 반짝(글로우) */
+@keyframes ateflo-wand {
+  0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 2px rgba(29, 117, 247, 0.35)); }
+  50% { transform: rotate(-9deg) scale(1.08); filter: drop-shadow(0 0 9px rgba(29, 117, 247, 0.7)); }
+}
+.ateflo-wand { transform-origin: bottom left; animation: ateflo-wand 2.2s ease-in-out infinite; }
+
+/* "···" 생각/작성 중 점 — 은은히 점멸 */
+@keyframes ateflo-dots { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+.ateflo-dots { animation: ateflo-dots 1.3s ease-in-out infinite; letter-spacing: 1px; }
+
+/* 부드럽게 떠오르며 등장(이미지·업체 박스) — 뚝 끊김 없이 */
+@keyframes ateflo-soft-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.ateflo-soft-in { animation: ateflo-soft-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* 선점 별 등장 — 순서대로 팝(임팩트: 작게→오버슈트→정착) */
+@keyframes ateflo-star-pop { 0% { opacity: 0; transform: scale(0.2); } 55% { opacity: 1; transform: scale(1.5); } 100% { opacity: 1; transform: scale(1); } }
+
+/* 도미노 팝(단어가 하나씩 살짝 튀며 부드럽게 등장) */
+@keyframes ateflo-domino {
+  0% { opacity: 0; transform: translateY(10px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ateflo-domino { display: inline-block; animation: ateflo-domino 0.62s cubic-bezier(0.34, 1.28, 0.64, 1) both; }
+
+/* 끝에 AI 로고 빛나며 등장 */
+@keyframes ateflo-logo-glow {
+  0% { opacity: 0; transform: scale(0.5) rotate(-12deg); filter: drop-shadow(0 0 0 rgba(29, 117, 247, 0)); }
+  55% { opacity: 1; transform: scale(1.18) rotate(5deg); filter: drop-shadow(0 0 18px rgba(29, 117, 247, 0.75)); }
+  100% { opacity: 1; transform: scale(1) rotate(0); filter: drop-shadow(0 0 9px rgba(29, 117, 247, 0.45)); }
+}
+.ateflo-logo-glow { animation: ateflo-logo-glow 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* 마퀴(칩이 양방향으로 끝없이 흐름) — 콘텐츠 2배 복제 + translateX 50% */
+@keyframes ateflo-marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ateflo-marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.ateflo-mq { display: flex; width: max-content; will-change: transform; }
+/* duration은 인라인 style로 지정 → 단축속성 대신 longhand로 둬야 인라인이 안 묻힘 */
+.ateflo-mq-left { animation-name: ateflo-marquee-left; animation-timing-function: linear; animation-iteration-count: infinite; }
+.ateflo-mq-right { animation-name: ateflo-marquee-right; animation-timing-function: linear; animation-iteration-count: infinite; }
+
+/* 움직임 최소화 선호 시: 연속/장식 애니 정지(정적 표시) */
+@media (prefers-reduced-motion: reduce) {
+  .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-aurora-sweep, .ateflo-bounce, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
+  .ateflo-load-mark, .ateflo-load-ring, .ateflo-load-glow, .ateflo-load-orbit, .ateflo-load-bar,
+  .ateflo-ch1, .ateflo-ch2, .ateflo-ch3, .ateflo-chglow, .ateflo-chip-bloom, .ateflo-flag, .ateflo-hero-aurora, .ateflo-slot-up {
+    animation: none !important;
+  }
+  .ateflo-flag { transform: none !important; }
+  .ateflo-chip-bloom { background-position: 30% 40%, 70% 60%, 50% 50% !important; }
+  .ateflo-aurora-sweep { background-position: 0% 50% !important; }
+}
+
+/* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */
+.ateflo-demo-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.ateflo-demo-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* ── AteFlo 로딩 화면 (AI/토스 감성) — 숨쉬는 로고 + 레이더 펄스 링 + 궤도 파티클 + 스윕 바 ── */
+@keyframes ateflo-load-mark {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.09) translateY(-3px); }
+}
+.ateflo-load-mark { animation: ateflo-load-mark 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; filter: drop-shadow(0 8px 18px rgba(29, 117, 247, 0.4)); }
+
+@keyframes ateflo-load-ring {
+  0%   { transform: scale(0.55); opacity: 0.55; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.ateflo-load-ring { position: absolute; inset: 0; border-radius: 9999px; border: 2px solid rgba(29, 117, 247, 0.55); animation: ateflo-load-ring 1.9s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+@keyframes ateflo-load-glow {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50%      { opacity: 0.55; transform: scale(1.12); }
+}
+.ateflo-load-glow { position: absolute; inset: 8px; border-radius: 9999px; background: radial-gradient(circle, rgba(29, 117, 247, 0.4), transparent 68%); filter: blur(10px); animation: ateflo-load-glow 1.6s ease-in-out infinite; }
+
+@keyframes ateflo-load-orbit { to { transform: rotate(360deg); } }
+.ateflo-load-orbit { position: absolute; inset: 0; animation: ateflo-load-orbit 2.8s linear infinite; }
+.ateflo-load-orbit i { position: absolute; top: 50%; left: 50%; height: 7px; width: 7px; margin: -3.5px; border-radius: 9999px; background: #1D75F7; }
+.ateflo-load-orbit i:nth-child(1) { transform: rotate(0deg) translateY(-58px); opacity: 1; }
+.ateflo-load-orbit i:nth-child(2) { transform: rotate(120deg) translateY(-58px); opacity: 0.6; }
+.ateflo-load-orbit i:nth-child(3) { transform: rotate(240deg) translateY(-58px); opacity: 0.3; }
+
+@keyframes ateflo-load-bar { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+.ateflo-load-bar { display: block; height: 100%; width: 36%; border-radius: 9999px; background: linear-gradient(90deg, transparent, #1D75F7, transparent); animation: ateflo-load-bar 1.15s ease-in-out infinite; }
+
+@keyframes ateflo-load-fadein { from { opacity: 0; } to { opacity: 1; } }
+.ateflo-load-screen { animation: ateflo-load-fadein 0.2s ease-out both; }
+/* 인트로 워드마크 — 로고 등장 뒤 살짝 떠오름 */
+@keyframes ateflo-intro-word {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ateflo-intro-word { animation: ateflo-intro-word 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.95s both; }
+/* 타이핑 커서 깜빡임 (목업) */
+@keyframes ateflo-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.ateflo-caret { animation: ateflo-caret 0.9s step-end infinite; }
+
+/* 스크롤 유도 — 원형(아래 화살표)이 핑퐁하며 가로로 늘어나 문구가 펼쳐짐 → 미세 바운스 계속 */
+@keyframes ateflo-scrollpill {
+  0%   { width: 40px; }
+  52%  { width: 206px; }   /* 쭉 늘어남(오버슈트) */
+  70%  { width: 176px; }   /* 핑 */
+  85%  { width: 190px; }   /* 퐁 */
+  100% { width: 184px; }   /* 안착 */
+}
+@keyframes ateflo-scrollbob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(3px); }
+}
+.ateflo-scrollpill {
+  width: 184px;
+  animation: ateflo-scrollpill 1.05s cubic-bezier(0.34, 1.3, 0.64, 1) both,
+             ateflo-scrollbob 1.7s ease-in-out 1.15s infinite;
+}
+
+/* 랜딩 목업 — '작동하는' 미니멀 루프 애니메이션 */
+/* 글 생성: 줄이 왼쪽부터 차오르며 타이핑되는 느낌 (scaleX) */
+@keyframes ateflo-type {
+  0%   { transform: scaleX(0); }
+  18%  { transform: scaleX(1); }
+  82%  { transform: scaleX(1); }
+  96%  { transform: scaleX(0); }
+  100% { transform: scaleX(0); }
+}
+.ateflo-type { transform-origin: left; animation: ateflo-type 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+/* 발행 완료 체크가 통 떠오르는 루프 */
+@keyframes ateflo-pop-loop {
+  0%, 8%    { transform: scale(0); opacity: 0; }
+  22%       { transform: scale(1.18); }
+  32%, 88%  { transform: scale(1); opacity: 1; }
+  98%, 100% { transform: scale(0); opacity: 0; }
+}
+.ateflo-pop-loop { animation: ateflo-pop-loop 4s cubic-bezier(0.34, 1.4, 0.64, 1) infinite; }
+/* 편집 하이라이트 은은한 펄스 */
+@keyframes ateflo-edit-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+.ateflo-edit-pulse { animation: ateflo-edit-pulse 2s ease-in-out infinite; }
+
+/* 헤더 '사전 신청' 버튼 옆 파란 점 깜빡임 */
+@keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+.dot-pulse { animation: dot-pulse 1.5s ease-in-out infinite; }
+
+/* 히어로 '블로그 만들기' 버튼 — 시선 끄는 부드러운 링 펄스 */
+@keyframes cta-pulse { 0% { box-shadow: 0 0 0 0 rgba(49, 130, 246, 0.45); } 70% { box-shadow: 0 0 0 14px rgba(49, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(49, 130, 246, 0); } }
+.cta-pulse { animation: cta-pulse 2.2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cta-pulse { animation: none; } }
+
+/* 가로 스크롤 영역 스크롤바 숨김(모바일 탭 칩 등) */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* 스와이프 안내 손가락 — 좌우로 살짝 움직임 */
+@keyframes swipe-hint { 0%, 100% { transform: translateX(9px); } 50% { transform: translateX(-9px); } }
+.swipe-hint { animation: swipe-hint 1.6s ease-in-out infinite; }
+
+/* 글 생성: 커서가 '글 생성' 클릭(초반) → 짝대기(줄)가 쭈루룩 생겼다 사라짐 (5s) */
+@keyframes mock-gen-tap { 0% { transform: scale(1); } 5% { transform: scale(0.8); } 11% { transform: scale(1); } 100% { transform: scale(1); } }
+.mock-gen-tap { animation: mock-gen-tap 4s ease-in-out infinite; }
+@keyframes mock-gen-ring { 0%, 3% { opacity: 0; transform: scale(0.4); } 6% { opacity: 0.5; transform: scale(0.7); } 18% { opacity: 0; transform: scale(1.7); } 100% { opacity: 0; } }
+.mock-gen-ring { animation: mock-gen-ring 4s ease-out infinite; }
+@keyframes mock-gen-bar { 0%, 16% { opacity: 0; transform: translateY(3px); } 26% { opacity: 1; transform: translateY(0); } 84% { opacity: 1; } 94%, 100% { opacity: 0; } }
+.mock-gen-bar { animation: mock-gen-bar 4s ease-in-out infinite; }
+
+/* 가짜 커서: 버튼 위에서 '톡' 누름 + 클릭 링 (편집·발행 공용, 클릭 ~58%, 5s) */
+@keyframes mock-tap { 0%, 52% { transform: scale(1); } 59% { transform: scale(0.8); } 66% { transform: scale(1); } 100% { transform: scale(1); } }
+.mock-tap { animation: mock-tap 4s ease-in-out infinite; }
+@keyframes mock-ring { 0%, 53% { opacity: 0; transform: scale(0.4); } 59% { opacity: 0.5; } 73% { opacity: 0; transform: scale(1.7); } 100% { opacity: 0; } }
+.mock-ring { animation: mock-ring 4s ease-out infinite; }
+/* 클릭 직후(약 60%) 결과가 떠오름 */
+@keyframes mock-reveal { 0%, 59% { opacity: 0; transform: scale(0.6); } 70% { opacity: 1; transform: scale(1.12); } 80%, 100% { opacity: 1; transform: scale(1); } }
+.mock-reveal { animation: mock-reveal 4s cubic-bezier(0.34, 1.4, 0.64, 1) infinite; }
+@keyframes mock-reveal-img { 0%, 59% { opacity: 0; transform: scaleY(0.1); } 72% { opacity: 1; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1); } }
+.mock-reveal-img { transform-origin: top; animation: mock-reveal-img 4s cubic-bezier(0.34, 1.3, 0.64, 1) infinite; }
+
+/* 내 글: 예약됨 → 발행됨 자동 전환 (예약 글이 시간 되면 발행되는 연출, 5s) */
+@keyframes mock-chip-sched { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0; } }
+@keyframes mock-chip-pub { 0%, 45% { opacity: 0; transform: scale(0.85); } 55% { opacity: 1; transform: scale(1.12); } 64%, 100% { opacity: 1; transform: scale(1); } }
+.mock-chip-sched { animation: mock-chip-sched 4s ease-in-out infinite; }
+.mock-chip-pub { animation: mock-chip-pub 4s cubic-bezier(0.34, 1.4, 0.64, 1) infinite; }
+
+/* 버튼이 '톡' 눌리는 애니 (커서 대신). gen=초반 클릭, 기본=후반 클릭 */
+@keyframes mock-gen-press { 0%, 3% { transform: scale(1); } 6% { transform: scale(0.93); } 12% { transform: scale(1); } 100% { transform: scale(1); } }
+.mock-gen-press { animation: mock-gen-press 4s ease-in-out infinite; transform-origin: center; }
+@keyframes mock-press { 0%, 52% { transform: scale(1); } 58% { transform: scale(0.93); } 64% { transform: scale(1); } 100% { transform: scale(1); } }
+.mock-press { animation: mock-press 4s ease-in-out infinite; transform-origin: center; }
+@keyframes ateflo-dropdown {
+  from { opacity: 0; transform: translateY(-6px) scaleY(0.97); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+.ateflo-dropdown { transform-origin: top; animation: ateflo-dropdown 0.16s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+/* ── Minimal mono theme ──────────────────────────────────── */
+/* Subtle hairline used to separate sections on black. */
+.mono-hairline {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Restrained entrance animation: a short fade + rise, once, on mount.
+   Staggered via delay classes. Disabled for reduced-motion users. */
+@keyframes mono-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.mono-rise {
+  animation: mono-rise 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.mono-d1 { animation-delay: 70ms; }
+.mono-d2 { animation-delay: 140ms; }
+.mono-d3 { animation-delay: 210ms; }
+.mono-d4 { animation-delay: 280ms; }
+.mono-d5 { animation-delay: 350ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mono-rise { animation: none; }
+}
+
+/* Hero aurora: very soft, slowly drifting color glow on white. Minimal, not flashy. */
+.hero-aurora { position: relative; }
+.hero-aurora::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 38% at 28% 30%, rgba(66, 133, 244, 0.10), transparent 62%),
+    radial-gradient(ellipse 42% 36% at 72% 32%, rgba(161, 66, 244, 0.08), transparent 62%),
+    radial-gradient(ellipse 48% 40% at 52% 72%, rgba(52, 168, 83, 0.07), transparent 62%),
+    radial-gradient(ellipse 40% 34% at 80% 70%, rgba(251, 188, 5, 0.06), transparent 62%);
+}
+
+/* Soft rainbow aurora glow around a card (dashboard panels). Subtle by design. */
+.aurora-glow {
+  position: relative;
+  isolation: isolate;
+}
+.aurora-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 140deg at 50% 50%,
+    #4285f4, #a142f4, #ea4335, #fbbc05, #34a853, #4285f4
+  );
+  filter: blur(22px);
+  opacity: 0.28;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora-glow::before { filter: blur(22px); }
 }
 
 .ateflo-reveal {
@@ -635,3 +1399,406 @@ html {
     transform: none;
   }
 }
+
+/* ── AteFlo 로고 (먹는 모션 로더) ───────────────────────────── */
+/* 입은 3시 방향 중심. 입 반각(--ateflo-gap)이 21.6deg(열림)↔0deg(다묾)로 양쪽이 동시에 모인다. */
+@property --ateflo-gap {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 21.6deg;
+}
+.ateflo-logo {
+  display: inline-block;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--ateflo-color, #1D75F7);
+  /* 마스크로 입(투명 섹터)을 도려낸다 — 배경(색/무지개)과 독립적으로 모양만 담당 */
+  -webkit-mask: conic-gradient(
+    #000 0deg,
+    #000 calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg + var(--ateflo-gap)),
+    #000 calc(90deg + var(--ateflo-gap)),
+    #000 360deg
+  );
+  mask: conic-gradient(
+    #000 0deg,
+    #000 calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg + var(--ateflo-gap)),
+    #000 calc(90deg + var(--ateflo-gap)),
+    #000 360deg
+  );
+}
+
+/* 프로: 부드러운 파스텔 무지개(제미나이 원색과 다른 톤)가 배경에 깔림 */
+.ateflo-logo--pro {
+  /* 갤럭시 AI식: 은은한 파스텔 색 덩어리들이 규칙 없이 부드럽게 떠다니는 메시 그라데이션 */
+  /* 파랑은 하나만 — 노랑·빨강·초록·보라가 고루 섞여 무료(단색 파랑)와 확실히 구분 */
+  background:
+    radial-gradient(52% 52% at 30% 25%, #1D75F7 0%, transparent 66%),
+    radial-gradient(52% 52% at 75% 28%, #ffd23a 0%, transparent 66%),
+    radial-gradient(52% 52% at 72% 75%, #ff4d6d 0%, transparent 66%),
+    radial-gradient(52% 52% at 24% 74%, #2fd07a 0%, transparent 66%),
+    radial-gradient(58% 58% at 52% 52%, #b06bff 0%, transparent 70%),
+    #f3eefb;
+  background-size: 200% 200%, 190% 190%, 210% 210%, 180% 180%, 200% 200%, auto;
+  background-position: 30% 25%, 75% 28%, 72% 75%, 24% 74%, 52% 52%, 0 0;
+  filter: saturate(1.3);
+}
+
+.ateflo-logo--anim {
+  animation: ateflo-chew 0.85s ease-in-out infinite;
+}
+
+/* 프로 + 애니메이션: 씹기 + 무지개가 천천히 영롱하게 회전 */
+.ateflo-logo--anim.ateflo-logo--pro {
+  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-mesh 11s ease-in-out infinite;
+}
+
+@keyframes ateflo-chew {
+  0%,
+  100% {
+    --ateflo-gap: 21.6deg;
+  }
+  50% {
+    --ateflo-gap: 0deg;
+  }
+}
+
+/* 각 색 덩어리가 서로 다른 지점으로 떠다녀 규칙 없는 영롱한 요동 (마지막 값은 정적 베이스) */
+@keyframes ateflo-mesh {
+  0% {
+    background-position: 20% 15%, 80% 25%, 70% 80%, 20% 70%, 50% 45%, 0 0;
+  }
+  20% {
+    background-position: 45% 35%, 55% 55%, 85% 60%, 10% 90%, 35% 65%, 0 0;
+  }
+  40% {
+    background-position: 15% 60%, 90% 40%, 50% 90%, 40% 50%, 65% 35%, 0 0;
+  }
+  60% {
+    background-position: 55% 20%, 60% 75%, 80% 50%, 5% 60%, 40% 70%, 0 0;
+  }
+  80% {
+    background-position: 35% 50%, 75% 35%, 60% 70%, 30% 85%, 55% 50%, 0 0;
+  }
+  100% {
+    background-position: 20% 15%, 80% 25%, 70% 80%, 20% 70%, 50% 45%, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ateflo-logo--anim,
+  .ateflo-logo--anim.ateflo-logo--pro {
+    animation: none;
+  }
+}
+
+/* ── 글 본문 스타일 (에디터 + 실제 발행 모습과 동일하게) ───────── */
+/* 토스 테크 문서st — 읽기 좋은 본문 타이포 스펙(검토 화면 = 발행 모습) */
+.ateflo-article {
+  font-size: 1.0625rem;        /* 17px */
+  line-height: 1.85;
+  color: #33363d;             /* 부드러운 진회색 본문 */
+  letter-spacing: -0.01em;    /* 한글 살짝 조여 깔끔하게 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.ateflo-article:focus {
+  outline: none;
+}
+.ateflo-article h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.022em;
+  color: #191f28;             /* 헤딩은 진한 먹색 — 섹션 명확 */
+  margin: 2.4em 0 0.7em;      /* 위 여백 넉넉히 = 섹션 구분 또렷 */
+}
+.ateflo-article h2:first-child { margin-top: 0.2em; }
+.ateflo-article h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.018em;
+  color: #191f28;
+  margin: 1.9em 0 0.5em;
+}
+.ateflo-article p {
+  margin: 1.15em 0;
+}
+.ateflo-article ul {
+  list-style: disc;
+  padding-left: 1.3em;
+  margin: 1.15em 0;
+}
+.ateflo-article ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+  margin: 1.15em 0;
+}
+.ateflo-article li {
+  margin: 0.5em 0;
+  padding-left: 0.15em;
+}
+.ateflo-article li::marker {
+  color: #b0b8c1;             /* 마커 절제된 회색 */
+}
+.ateflo-article a {
+  color: #1d75f7;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(29, 117, 247, 0.35);
+}
+.ateflo-article strong {
+  font-weight: 700;
+  color: #191f28;             /* 강조는 더 진하게 */
+}
+.ateflo-article figure {
+  margin: 1.4em 0;
+}
+.ateflo-article img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.ateflo-article figure.align-left {
+  text-align: left;
+}
+.ateflo-article figure.align-center {
+  text-align: center;
+}
+.ateflo-article figure.align-right {
+  text-align: right;
+}
+.ateflo-article figure.align-full img {
+  width: 100%;
+}
+.ateflo-article figcaption {
+  margin-top: 0.5em;
+  font-size: 0.85em;
+  color: #8a8a8a;
+  text-align: center;
+}
+.ateflo-article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3em 0;
+  font-size: 0.97em;
+}
+.ateflo-article th,
+.ateflo-article td {
+  border: 1px solid #d8d8d8;
+  padding: 0.55em 0.75em;
+  text-align: left;
+  vertical-align: top;
+}
+.ateflo-article th {
+  background: #f5f6f8;
+  font-weight: 700;
+}
+/* placeholder */
+.ateflo-article p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #bbb;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* 형광펜·인용구 — 에디터(.ProseMirror)·미리보기(.prose) 공통(발행 .ateflo-post와 동일 결) */
+.prose mark, .ProseMirror mark {
+  background: linear-gradient(transparent 55%, #fff3a8 55%);
+  color: inherit;
+  padding: 0 1px;
+  font-weight: 600;
+}
+.prose blockquote, .ProseMirror blockquote {
+  margin: 1.4em 0;
+  padding: 0.9em 1.1em;
+  background: #f5f8ff;
+  border-left: 4px solid #1d75f7;
+  border-radius: 8px;
+  font-style: normal;
+  color: #33363d;
+  quotes: none;
+}
+.prose blockquote p, .ProseMirror blockquote p { margin: 0.3em 0; }
+.prose blockquote p::before, .prose blockquote p::after { content: none; }
+
+/* 사진 자리 플레이스홀더(미리보기) — 점선 박스로 '여기 사진' 안내 */
+.ateflo-photo-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 1.2em 0;
+  padding: 0.85em 1em;
+  background: #f7f8fa;
+  border: 1px dashed #cfd6e0;
+  border-radius: 12px;
+  color: #8b95a1;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+/* ═══════════════ AT 디자인 시스템 v1 (토스 TDS 기반 토큰·모션) ═══════════════
+   UI 대개편의 단일 규칙: 화면들은 이 토큰과 유틸리티 위에서만 조립한다.
+   - 그레이 스케일·블루는 TDS 계열, 브랜드 블루(#1D75F7)는 유지
+   - 등장 모션: at-rise(14px 아래에서 부드럽게) + at-d1~d6 스태거 — '갑툭튀 금지' 원칙의 표준 구현
+   - 프레스 피드백: at-press(눌림 스케일) — 모든 탭 가능한 카드·버튼에 */
+:root {
+  --at-blue: #1d75f7;
+  --at-blue-weak: rgba(29, 117, 247, 0.06);
+  --at-grey-900: #191f28;
+  --at-grey-700: #333d4b;
+  --at-grey-600: #4e5968;
+  --at-grey-400: #8b95a1;
+  --at-grey-200: #e5e8eb;
+  --at-grey-100: #f2f4f6;
+  --at-grey-50: #f9fafb;
+  --at-radius-card: 20px;
+  --at-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes at-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.at-rise { animation: at-rise 0.5s var(--at-ease) backwards; }
+.at-d1 { animation-delay: 0.04s; }
+.at-d2 { animation-delay: 0.1s; }
+.at-d3 { animation-delay: 0.16s; }
+.at-d4 { animation-delay: 0.22s; }
+.at-d5 { animation-delay: 0.28s; }
+.at-d6 { animation-delay: 0.34s; }
+
+.at-press { transition: transform 0.15s var(--at-ease); }
+.at-press:active { transform: scale(0.98); }
+
+/* 섹션 라벨(작은 회색) + 헤드라인(크고 진한) — 토스 타이포 위계 */
+.at-label { font-size: 13px; font-weight: 600; color: var(--at-grey-400); letter-spacing: -0.01em; }
+.at-headline { font-size: 22px; font-weight: 800; color: var(--at-grey-900); letter-spacing: -0.02em; line-height: 1.3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .at-rise { animation: none; }
+  .at-press:active { transform: none; }
+}
+
+/* AI 생성 파동 — 글감 교체 중 카드 테두리에 연한 무지개가 흐름(생성되고 있다는 신호) */
+@keyframes at-ai-glow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.at-ai-swap { position: relative; }
+.at-ai-swap { box-shadow: 0 0 22px -6px rgba(150, 130, 255, 0.45); }
+.at-ai-swap::after {
+  content: "";
+  position: absolute;
+  inset: -2.5px;
+  border-radius: 19px;
+  padding: 2.5px;
+  background: linear-gradient(90deg, #8ec5ff, #b79cff, #ff9ec6, #ffd08a, #8ec5ff) 0 0 / 200% 100%;
+  animation: at-ai-glow 1.4s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* AI 오브 — 생성 장면의 심장. 무지개가 흐르며 숨쉬는 원 */
+@keyframes at-orb-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+.at-ai-orb {
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  background: linear-gradient(120deg, #8ec5ff, #b79cff, #ff9ec6, #ffd08a, #8ec5ff) 0 0 / 300% 100%;
+  animation: at-ai-glow 2.2s linear infinite, at-orb-pulse 1.6s ease-in-out infinite;
+  box-shadow: 0 14px 38px -12px rgba(140, 120, 255, 0.55);
+}
+
+/* 버튼 팝 — 스텝 전환 시 통통 튀며 등장(스프링 이징) */
+@keyframes at-pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.035); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.at-pop { animation: at-pop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) backwards; }
+
+/* 룰렛 상태 텍스트 — 위아래 블러(마스크) + 아래서 굴러 올라오는 롤 */
+.at-roll-mask {
+  mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+}
+@keyframes at-roll-in {
+  from { transform: translateY(85%); opacity: 0; filter: blur(3px); }
+  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+.at-roll-in { animation: at-roll-in 0.5s var(--at-ease) backwards; }
+
+/* 라이브 커서 — 타자기 끝에서 깜빡이는 무지개 캐럿 */
+@keyframes at-caret-blink { 0%, 55% { opacity: 1; } 60%, 100% { opacity: 0.15; } }
+.at-caret {
+  display: inline-block;
+  width: 3px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #8ec5ff, #b79cff, #ff9ec6) 0 0 / 100% 300%;
+  animation: at-caret-blink 1s steps(1) infinite, at-ai-glow 2s linear infinite;
+}
+
+/* ═══════════════ 글래스 리테마 (애플 리퀴드 글래스) ═══════════════
+   순백 유리 아이콘이 살려면 배경에 톤이 있어야 한다 — 앱 배경 = 은은한 블루 틴트 그라데이션,
+   카드 = 반투명 유리(블러+새츄레이션+상단 하이라이트), 아이콘 = 색 그라데이션 타일 위 백색 유리. */
+.at-app-bg {
+  background: linear-gradient(180deg, #f2f5ff 0%, #f5f7fc 40%, #f4f6f9 100%); /* 메이트 톤 — 은은한 블루 캔버스 */
+}
+
+.at-glass { /* ★메이트 카드 — 흰→연블루 광 표면 + 블루 섀도(전 화면 공통 카드 언어) */
+  background: linear-gradient(160deg, #ffffff 55%, #f2f7ff 100%);
+  border: 1px solid rgba(29, 117, 247, 0.06);
+  box-shadow: 0 2px 12px -4px rgba(29, 117, 247, 0.12);
+  border-radius: 20px;
+}
+
+/* 시트·바처럼 가독성이 더 필요한 면 */
+.at-glass-strong { /* 시트·모달 — 떠 있는 요소는 깊은 블루 섀도 */
+  background: #ffffff;
+  box-shadow: 0 -8px 40px -12px rgba(20, 60, 140, 0.18);
+}
+
+/* 크레딧 번개 — 선택 시 아래서 위로 차오름 */
+.at-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.6s var(--at-ease); }
+.at-fill-on { clip-path: inset(0 0 0 0); }
+
+/* 승인팩 번개 — 이따금 찌지직(전기 스파크) */
+@keyframes at-zap {
+  0%, 84%, 96%, 100% { opacity: 0; }
+  86% { opacity: 1; }
+  88% { opacity: 0.25; }
+  90% { opacity: 1; }
+  93% { opacity: 0.5; }
+}
+.at-zap { clip-path: inset(0 0 0 0); animation: at-zap 2.6s linear infinite; }
+
+/* 공지 벨 — 안 읽은 소식이 있으면 이따금 흔들림 */
+@keyframes at-bell-shake {
+  0%, 76%, 100% { transform: rotate(0); }
+  80% { transform: rotate(13deg); }
+  84% { transform: rotate(-11deg); }
+  88% { transform: rotate(8deg); }
+  92% { transform: rotate(-6deg); }
+  96% { transform: rotate(3deg); }
+}
+.at-bell-shake { animation: at-bell-shake 3.2s ease-in-out infinite; transform-origin: 50% 15%; }
+
+/* 시트 내부 스크롤 — 바는 숨기고 스크롤만(유저: 보이는 스크롤이 부자연) */
+.at-no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior: contain; }
+.at-no-scrollbar::-webkit-scrollbar { display: none; }

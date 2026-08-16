@@ -1,0 +1,16 @@
+import { assignGreeting, greetViolates, GREET_OPEN, GREET_CLOSE, GREET_LEAD } from "../lib/greeting.ts";
+let fail=0; const ok=(c,m)=>{if(!c){fail++;console.log(`  !! ${m}`);}else console.log(`  OK ${m}`);};
+const users=Array.from({length:60},(_,i)=>`user-${i}`);
+const seen={open:new Set(),close:new Set(),lead:new Set(),len:new Set()};
+users.forEach(u=>{const a=assignGreeting(u,0);seen.open.add(a.open.key);seen.close.add(a.close.key);seen.lead.add(a.lead);seen.len.add(a.len);});
+ok(seen.open.size===GREET_OPEN.length&&seen.close.size===GREET_CLOSE.length,"도입·마무리 전 유형 커버(60유저)");
+ok(seen.lead.size===GREET_LEAD.length&&seen.len.size===3,"첫 문장 소재·길이 전 유형 커버");
+ok(JSON.stringify(assignGreeting("u1",0))===JSON.stringify(assignGreeting("u1",0)),"같은 유저=같은 배정(결정론)");
+ok(JSON.stringify(assignGreeting("u1",0))!==JSON.stringify(assignGreeting("u1",1)),"재생성(variant)=다른 배정");
+ok(greetViolates("좋은 글이 많네요. 소통해요."),"상투 도입 검출");
+ok(greetViolates("경제 글 반갑습니다. 소중한 인연이 되길."),"과공손 상투구 검출");
+ok(greetViolates("주식 글을 최근에 다루셨더라고요."),"거짓 디테일 검출");
+ok(greetViolates("월급만으로는 부족해서 시작했어요."),"클리셰 도입 검출");
+ok(!greetViolates("경제 공부를 시작하면서 배운 것들을 기록하고 있습니다. 자주 들르고 싶어요."),"정상 통과");
+console.log(fail===0?"\n통과: 인사말 변주 체계":"\n실패: "+fail);
+process.exit(fail?1:0);

@@ -1,0 +1,41 @@
+name: Weekly Social Cards
+
+# 매주 일요일 18:00 KST(09:00 UTC)에 발행 대기를 목표치(14개)까지 채운다.
+# --target 모드라 그 주에 삭제로 줄어든 만큼만 보충 생성한다(이미 차 있으면 안 만듦).
+# 수동 실행도 가능(Actions 탭 → Run workflow).
+on:
+  schedule:
+    - cron: "0 9 * * 0"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "대기열 목표 개수"
+        default: "14"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: social-weekly
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_SOCIAL_API_KEY: ${{ secrets.ANTHROPIC_SOCIAL_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ateflo-korean-wordpress-saas
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx puppeteer browsers install chrome
+      - name: Top up social card queue
+        run: node --import tsx scripts/card-gen-bulk.ts --target ${{ github.event.inputs.target || '14' }}
