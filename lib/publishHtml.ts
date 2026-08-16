@@ -532,7 +532,7 @@ function styleMarkers(html: string): string {
   });
   return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (raw, attr, inner) => {
     const plain = String(inner).replace(/<[^>]+>/g, "").trim();
-    if (/^-{3,}$/.test(plain)) return '<p style="text-align:center;color:#d5d9df;letter-spacing:2px;margin:8px 0">─────</p>';
+    if (/^-{3,}$/.test(plain)) return ""; // ★'---' 마커→구분선 변환 폐지(2026-08-17 유저: 구분선 전면 금지 — 이 변환기가 마지막 생존 경로였다)
     if (/^(?:&gt;|>)\s+/.test(plain)) {
       const q = plain.replace(/^(?:&gt;|>)\s+/, "");
       return `<p style="text-align:left;font-size:17px;font-weight:700;color:#33363d;padding:4px 0">“${q}”</p>`;
