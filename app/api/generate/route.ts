@@ -392,6 +392,11 @@ export async function POST(request: Request) {
           const h2s = [...a.body_html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => m[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean);
           const labelish = h2s.filter((h) => [...h].length <= 9 && !/[?!…]|[을를이가은는도]\s|까$|나$|법$/.test(h));
           if (labelish.length >= 2) w.push(`소제목이 명사 라벨형이다('${labelish.slice(0, 2).join("', '")}') — 독자의 질문·상황이 담긴 훅형으로 바꿔라('8.15% 진짜 다 받을 수 있을까' 결, 세부 키워드는 유지).`);
+          // ★홈판 첫 화면 게이트(2026-08-17 유저: 첫 120자 안에 금액·결과·변화 — 낚시 아님 확인)
+          if (narrativeMode) {
+            const lead = a.body_html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
+            if (!/[0-9][0-9,.]*\s*(원|만|억|%|배|일|개월|년)/.test(lead)) w.push("홈판 글인데 첫 화면(도입 200자)에 결과 숫자가 없다 — '월급 300 기준 매달 N원' 결로 첫 120자 안에 금액·결과·변화를 박아라.");
+          }
           // ★표 칸수 불일치(2026-08-14 실측: '총 납입액' 행이 셀 하나 — 렌더는 코드가 빈 칸으로 메우지만 내용은 모델이 고쳐야 한다)
           const uneven = (a.body_html.match(/<table[\s\S]*?<\/table>/gi) ?? []).some((t) => {
             const ns = (t.match(/<tr[\s\S]*?<\/tr>/gi) ?? []).map((r) => (r.match(/<t[dh]\b/gi) ?? []).length).filter((n) => n > 0);

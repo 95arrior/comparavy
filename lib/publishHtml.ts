@@ -446,7 +446,7 @@ function styleMarkers(html: string): string {
         const title = String(m[2]).trim().replace(/</g, "");
         if (!url || seen.has(url)) continue; // 같은 글 두 번 금지
         seen.add(url);
-        if (items.length >= 2) continue;     // ★2026-08-17 유저: 문맥상 1~2개
+        if (items.length >= 1) continue;     // ★2026-08-17 유저 2차: 끝 관련글은 1개(독서 경로 — 중간 1·끝 1)
         items.push(`<p style="text-align:center;font-size:13.5px;color:#4e5968">${title}<br><span style="font-size:12.5px;color:#8b95a1">${url}</span></p>`);
       }
       const block = items.length

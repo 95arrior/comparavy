@@ -490,7 +490,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ];
   const body = "<p>본문</p><p>마무리 문장</p>";
   const r = ensureRelatedLinks(body, posts);
-  ok((r.match(/\[마무리관련글:/g) ?? []).length === 2, "★없으면 2개를 붙인다(2026-08-17: 기계적 3개→문맥 1~2개)");
+  ok((r.match(/\[마무리관련글:/g) ?? []).length === 1, "★없으면 끝 관련글 1개(2026-08-17 독서 경로: 중간1+끝1)");
   ok(!/\| 중복 글/.test(r), "★같은 URL은 한 번만 — 트래킹 파라미터 달라도 같은 글이다");
   ok(!/연결 이유|유리합니다/.test(r), "★설명 문장을 넣지 않는다");
   ok(ensureRelatedLinks(body, []) === body, "★후보가 없으면 그대로 둔다");
@@ -500,10 +500,10 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   const husk = body + "<p>[마무리관련글: | 출산지원금 타임라인]</p><p>[마무리관련글: | 배달 라이더 수입]</p><p>[마무리관련글: | 정부지원금 대출]</p>";
   const r3 = ensureRelatedLinks(husk, posts);
   ok(!/\[마무리관련글:\s*\|/.test(r3), "★URL 없는 껍데기 마커는 남지 않는다(실측 사고)");
-  ok((r3.match(/\[마무리관련글: https/g) ?? []).length === 2, "★껍데기를 걷어내고 진짜 주소 2개를 붙인다");
+  ok((r3.match(/\[마무리관련글: https/g) ?? []).length === 1, "★껍데기를 걷어내고 진짜 주소 1개를 붙인다");
   const modelMade = body + "<p>[마무리관련글: https://a/1 | 제목1]</p><p>[마무리관련글: https://a/2 | 제목2]</p>";
   const r4 = ensureRelatedLinks(modelMade, posts);
-  ok(!/https:\/\/a\/1/.test(r4) && (r4.match(/\[마무리관련글:/g) ?? []).length === 2, "★모델이 쓴 마커는 유효해도 버리고 코드가 다시 만든다(자리의 주인은 하나)");
+  ok(!/https:\/\/a\/1/.test(r4) && (r4.match(/\[마무리관련글:/g) ?? []).length === 1, "★모델이 쓴 마커는 유효해도 버리고 코드가 다시 만든다(자리의 주인은 하나)");
   ok(!/<p>\s*<\/p>/.test(r4), "★마커만 있던 문단은 문단째 걷어낸다(빈 여백 금지)");
 
   // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다(오늘 다섯 번 겪었다)

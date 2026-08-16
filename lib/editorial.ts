@@ -495,7 +495,7 @@ export function ensureRelatedLinks(html: string, posts: { title: string; url: st
   const add = posts
     .filter((p) => /^https?:\/\//i.test(String(p.url || ""))) // 주소가 없는 후보는 링크가 될 수 없다
     .filter((p, i, arr) => arr.findIndex((x) => x.url.split("?")[0] === p.url.split("?")[0]) === i) // 같은 글 두 번 금지
-    .slice(0, 2); // ★3→2(2026-08-17 유저: '기계적 3개 고정 → 문맥상 맞는 1~2개' — 순서는 seriesFirst가 연관도로 이미 정렬)
+    .slice(0, 1); // ★2→1(2026-08-17 유저 2차: 독서 경로 = 본문 중간 1개 + 끝 1개 — 끝은 연관도 1위만)
   if (!add.length) return h;
   const markers = add.map((p) => `<p>[마무리관련글: ${p.url} | ${String(p.title).slice(0, 60)}]</p>`).join("");
   return `${h}\n${markers}`;
