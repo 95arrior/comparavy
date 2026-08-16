@@ -45,6 +45,7 @@ export async function gatherFreshEvidence(keyword: string): Promise<string[]> {
     try {
       const res = await fetch(`https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(q)}&sort=date&display=6`, {
         headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+        signal: AbortSignal.timeout(10_000), // ★외부 API 무한 대기 차단(2026-08-17 300초 타임아웃 조사 — 생성 경로의 모든 대기에 상한)
       });
       if (!res.ok) continue;
       const d = (await res.json()) as { items?: { title?: string; description?: string; pubDate?: string }[] };
@@ -66,7 +67,7 @@ export async function crossCheckFacts(bodyHtml: string, keyword: string, userId?
   if (claims.length < 2) return [];
   const evidence = await gatherFreshEvidence(keyword);
   if (evidence.length < 3) return []; // 근거가 얇으면 검증하지 않는다(근거 없는 교정 금지)
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 90_000 });
   const res = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 900,

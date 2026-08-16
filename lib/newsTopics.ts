@@ -53,7 +53,7 @@ export async function todayIssueTopic(sub: string): Promise<IssueTopic | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (news.length >= 3 && apiKey) {
     try {
-      const client = new Anthropic({ apiKey });
+      const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
       const list = news.map((n, i) => `${i + 1}. [${n.press}] ${n.title} — ${n.description.slice(0, 120)}`).join("\n");
       const res = await client.messages.create({
         model: "claude-haiku-4-5",

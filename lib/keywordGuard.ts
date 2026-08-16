@@ -28,7 +28,7 @@ export async function isMeaningfulKeyword(raw: string): Promise<boolean> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return true;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 45_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 5,

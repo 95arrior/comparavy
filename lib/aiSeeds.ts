@@ -8,7 +8,7 @@ export async function validateStoryMeaning(title: string, story: string): Promis
   if (s.length < 8) return false;
   if (!apiKey) return true; // 키 없으면 규칙(1차)만으로 — 여기선 통과
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 60,
@@ -38,7 +38,7 @@ export async function deriveStoryTopic(story: string, field: string, audience?: 
   const s = (story || "").trim().slice(0, 2500);
   if (!apiKey || s.length < 10) return "";
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 120,
@@ -72,7 +72,7 @@ export async function generateLocalKeywords(areas: string[], field: string, audi
   const hit = localKwCache.get(cacheKey);
   if (hit) return hit;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 500,
@@ -119,7 +119,7 @@ export async function expandLocalAreas(address: string, field: string, audience?
   const hit = areaCache.get(cacheKey);
   if (hit) return hit;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 200,
@@ -163,7 +163,7 @@ export async function resolveLocalPlan(address: string, field: string, audience?
   const hit = planCache.get(cacheKey);
   if (hit) return hit;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 220,
@@ -204,7 +204,7 @@ export async function expandSeeds(label: string, max = 15): Promise<string[]> {
   const clean = label.replace(/·/g, " ").trim();
   if (!apiKey || clean.length < 1) return [];
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 500,
@@ -243,7 +243,7 @@ export async function generateAudienceTopics(field: string, audience: string | u
   const hit = audTopicCache.get(cacheKey);
   if (hit) return hit;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 500,

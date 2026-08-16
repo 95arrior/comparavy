@@ -20,7 +20,7 @@ export async function pickHomefeedTitle(args: {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 90_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 1600, // ★900은 후보 6개+채점 JSON이 잘렸다(2026-08-14 실측: 파싱 실패→픽 무음 소실)

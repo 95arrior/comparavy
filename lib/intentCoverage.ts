@@ -18,7 +18,7 @@ export async function scoreIntentCoverage(
   const text = String(bodyHtml || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 5000);
   if (text.length < 300) return null;
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 60_000 });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 700,
