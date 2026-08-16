@@ -69,6 +69,18 @@ export function stiltedInterjections(html: string): string[] {
   return [...new Set(STILTED_WORDS.filter((w) => new RegExp(`(^|[\\s>,.!?"'(])${w}`).test(text)))];
 }
 /** 문장 첫머리 감탄사만 걷어낸다 — 문장 자체는 건드리지 않는다. */
+/** ★제목 대시 금지(2026-08-17 유저: "— 쓰지 않기로 했는데 계속 나온다") — 저장 직전 코드가 치환한다.
+ *  긴 대시(— –)와 '공백-하이픈-공백'만 쉼표로 바꾼다 — 'e-커머스'처럼 붙은 하이픈·'8·15' 가운뎃점은 보존. */
+export function stripTitleDash(t: string): string {
+  return String(t ?? "")
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/\s+-\s+/g, ", ")
+    .replace(/,\s*,/g, ", ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .trim();
+}
+
 export function stripStilted(html: string): string {
   // 첫머리 패스(문장 구조 보존) → 위치 무관 패스(중간에 박힌 것 박멸) 순서
   return String(html || "").replace(STILTED_LEAD_RE, "$1").replace(STILTED_ANY_RE, "$1").replace(/  +/g, " ");

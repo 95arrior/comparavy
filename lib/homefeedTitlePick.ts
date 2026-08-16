@@ -47,7 +47,7 @@ export async function pickHomefeedTitle(args: {
       try { const j = JSON.parse(m[0]) as { best?: string; why?: string }; best = String(j.best ?? "").trim(); why = String(j.why ?? ""); } catch { /* 잘린 JSON — 아래 폴백 */ }
     }
     if (!best) { const bm = /"best"\s*:\s*"([^"]+)"/.exec(textOut); if (bm) best = bm[1].trim(); } // ★잘려도 best만 건진다
-    best = best.replace(/^["']|["']$/g, "").slice(0, 80);
+    best = best.replace(/^["']|["']$/g, "").replace(/\s*[—–]\s*/g, ", ").replace(/\s+-\s+/g, ", ").slice(0, 80); // ★대시 금지(2026-08-17)
     if (!best) { console.log("[hf-title] 픽 실패 — best 없음(출력 잘림 의심)"); return null; }
     // 홈판 규격 게이트 — 미달이면 픽을 버리고 기존 경로(본문 생성기가 직접 짓기)로 둔다. 나쁜 픽 강제가 최악이다.
     const v = validateHomefeedTitle(best, args.keyword);

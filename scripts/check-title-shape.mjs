@@ -169,3 +169,13 @@ ok(!titleShapeClashes("조선관련주, 지금 사도 되는 걸까요?", 수렴
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 제목 뼈대");
 process.exit(fail ? 1 : 0);
+
+// ★제목 대시 금지(2026-08-17 유저: "쓰지 않기로 했는데 계속 나온다") — 코드 치환 검증
+{
+  const { stripTitleDash } = await import("../lib/editorial.ts");
+  const ok2 = (c, l) => { if (!c) { console.log("FAIL |", l); process.exitCode = 1; } else console.log("OK  |", l); };
+  ok2(stripTitleDash("삼성전자 인도 진출 — 진짜 노림수") === "삼성전자 인도 진출, 진짜 노림수", "긴 대시 → 쉼표");
+  ok2(stripTitleDash("청약 일정 - 8월 정리") === "청약 일정, 8월 정리", "공백 하이픈 → 쉼표");
+  ok2(stripTitleDash("e-커머스 정산 지연") === "e-커머스 정산 지연", "붙은 하이픈은 보존");
+  ok2(stripTitleDash("8·15 특판 적금") === "8·15 특판 적금", "가운뎃점 보존");
+}

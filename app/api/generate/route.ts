@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, closingQuestionMissing, SENT_MAX_CHARS, EMOJI_MIN, KEYWORD_FLOOR } from "@/lib/editorial";
+import { stripTitleDash, hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, closingQuestionMissing, SENT_MAX_CHARS, EMOJI_MIN, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -820,8 +820,8 @@ export async function POST(request: Request) {
         const insertPayload: Record<string, unknown> = {
           user_id: user.id,
           keyword,
-          title: article.title,
-          meta_title: article.meta_title,
+          title: stripTitleDash(article.title), // ★대시 금지(2026-08-17 유저) — 코드 치환
+          meta_title: stripTitleDash(article.meta_title ?? "") || article.meta_title,
           meta_description: article.meta_description,
           body_html: finalBody,
           faq: article.faq,

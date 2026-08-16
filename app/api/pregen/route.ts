@@ -3,7 +3,7 @@ import { fetchTopPosts } from "@/lib/naverBlogSearch";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { generateArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience } from "@/lib/editorial";
+import { stripTitleDash, hasFabricatedExperience } from "@/lib/editorial";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { finalizeArticleBody } from "@/lib/finalizeBody";
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       if (charCount < 500) throw new Error("too-short");
 
       const upPayload: Record<string, unknown> = {
-        title: article.title, meta_title: article.meta_title, meta_description: article.meta_description,
+        title: stripTitleDash(article.title), meta_title: article.meta_title, meta_description: article.meta_description, // ★대시 금지(2026-08-17)
         body_html: finalBody, faq: article.faq, char_count: charCount,
         simhash: simhash(article.body_html), original_html: finalBody,
         write_note: article.write_note || null, tags: article.tags ?? [],
